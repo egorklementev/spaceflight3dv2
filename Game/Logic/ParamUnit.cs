@@ -3,21 +3,29 @@ using System.Collections.Generic;
 
 public class ParamUnit : MonoBehaviour {
 
-    [Header("Game params")]
-    public Vector2 gridSize;
-    [Range(3, 8)]
-    public int colorsAvailable = 5;    
+    [Header("Grid params")]
+    public Vector2 gridSize;    
     public float gemOffsetParam = .3f;
     public float gemMoveTime = 1f;
     public float gemScaleSpeed = 1f;
-    public bool randomizeColors = false;
+    public float destructionForce = 10f;
+    public float dPartsLifetime = 3f;
     public Vector2 screenBound;
+    [Space(10)]
+
+    [Header("Gameplay params")]
+    [Range(3, 8)]
+    public int colorsAvailable = 5;
+    [Range(3, 5)]
+    public int sequenceSize = 3;
+    public bool randomizeColors = false;
     [Space(10)]
 
     [Header("Bonus params")]
     [Range(0, 100)]
     public int bonusesPercentage;
     public int bonusesNumber;
+    [Space(10)]
 
     [Header("Units' refs")]
     public GraphicsUnit gu;
@@ -73,7 +81,7 @@ public class ParamUnit : MonoBehaviour {
 
     public int GetRandomBonus()
     {
-        return 1; // MAKE IT!
+        return -1; // MAKE IT!
     }
 
 }

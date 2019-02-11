@@ -22,6 +22,8 @@ public class LogicUnit : MonoBehaviour {
 
     private int gSizeX;
     private int gSizeY;
+
+    private bool needToCheck = false;
     
     private void Awake() {        
         gSizeX = (int)pu.gridSize.x;
@@ -41,9 +43,13 @@ public class LogicUnit : MonoBehaviour {
 
     private void Update ()
     {
-        if (gemSO != UNSELECTED && gemST != UNSELECTED && readyToSwap)
+        if (gu.WorkingObjs == 0)
         {
-            // SWAP
+            if (needToCheck)
+            {
+                CheckGemGrid();
+                FillGemGrid();
+            }
         }
 	}
     
@@ -56,13 +62,89 @@ public class LogicUnit : MonoBehaviour {
         };
     }
 
-    public void DestroyGem(Vector2 position)
+    public void DestroyGem(int x, int y)
     {
-        grid[(int)position.x, (int)position.y].Gem = null;
+        grid[x, y].Gem = null;
     }
 
     public void CheckGemGrid()
     {
+        needToCheck = false;
+
+        bool[,] needToDestroy = new bool[gSizeX, gSizeY];
+        for (int x = 0; x < gSizeX; ++x)
+        {
+            for (int y = 0; y < gSizeY; ++y)
+            {
+                needToDestroy[x, y] = false;
+            }
+        }
+
+        // From left to rigth
+        for (int y = 0; y < gSizeY; ++y)
+        {
+            int curX = 0;
+            int currentEqual = 1;
+            while (curX < (gSizeX - 1))
+            {
+                while (curX < (gSizeX - 1) &&
+                    grid[curX, y].Gem.Color == grid[curX + 1, y].Gem.Color)
+                {
+                    currentEqual++;
+                    curX++;
+                }
+
+                if (currentEqual >= pu.sequenceSize)
+                {
+                    for (int x = curX - currentEqual + 1; x <= curX; ++x)
+                    {
+                        needToDestroy[x, y] = true;
+                    }
+                }
+
+                currentEqual = 1;
+                curX++;
+            }
+        }
+
+        // From top to bottom
+        for (int x = 0; x < gSizeX; ++x)
+        {
+            int curY = 0;
+            int currentEqual = 1;
+            while (curY < (gSizeY - 1))
+            {
+                while (curY < (gSizeY - 1) &&
+                    grid[x, curY].Gem.Color == grid[x, curY + 1].Gem.Color)
+                {
+                    currentEqual++;
+                    curY++;
+                }
+
+                if (currentEqual >= pu.sequenceSize)
+                {
+                    for (int y = curY - currentEqual + 1; y <= curY; ++y)
+                    {
+                        needToDestroy[x, y] = true;
+                    }
+                }
+
+                currentEqual = 1;
+                curY++;
+            }
+        }
+
+        for (int x = 0; x < gSizeX; ++x)
+        {
+            for (int y = 0; y < gSizeY; y++)
+            {
+                if (needToDestroy[x, y])
+                {
+                    gu.DestroyGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    DestroyGem(x, y);
+                }
+            }
+        }
     }
 
     // Checks if it is valid to select the gem or not
@@ -103,6 +185,7 @@ public class LogicUnit : MonoBehaviour {
         Gem temp = grid[(int)pos1.x, (int)pos1.y].Gem;
         grid[(int)pos1.x, (int)pos1.y].Gem = grid[(int)pos2.x, (int)pos2.y].Gem;
         grid[(int)pos2.x, (int)pos2.y].Gem = temp;
+        needToCheck = true;
     }
 
     // If less than two gems were selected

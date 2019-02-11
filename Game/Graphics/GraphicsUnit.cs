@@ -7,6 +7,7 @@ public class GraphicsUnit : MonoBehaviour {
 
     [Header("Prefabs")]
     public GameObject[] gems;
+    public GameObject[] dGems;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -21,8 +22,6 @@ public class GraphicsUnit : MonoBehaviour {
 
     private int gSizeX;
     private int gSizeY;
-
-    private float localSize;
     
     private void Awake()
     {
@@ -64,6 +63,37 @@ public class GraphicsUnit : MonoBehaviour {
         GameObject temp = grid[(int)pos1.x, (int)pos1.y];
         grid[(int)pos1.x, (int)pos1.y] = grid[(int)pos2.x, (int)pos2.y];
         grid[(int)pos2.x, (int)pos2.y] = temp;
+    }
+
+    public void DestroyGem(int x, int y, int color, int bonus)
+    {
+        Destroy(grid[x, y]);
+
+        Vector3 position = transform.position;
+        position.x += (pu.gemSize + pu.gemOffset) * x;
+        position.y += (pu.gemSize + pu.gemOffset) * y;
+
+        GameObject dGemPrefab = dGems[lu.grid[x, y].Gem.Color];
+        if (bonus != -1)
+        {
+            // Change 'dGemPrefab' to corresponding destroyed bonus
+        }
+
+        GameObject dGem = Instantiate(dGemPrefab);
+        Destroy(dGem, pu.dPartsLifetime);
+        dGem.transform.parent = transform;
+        dGem.transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
+        dGem.transform.position = position;
+
+        foreach (Transform child in dGem.transform)
+        {
+            Vector3 forceDirection = new Vector3(
+                Random.Range(-pu.destructionForce, pu.destructionForce),
+                Random.Range(-pu.destructionForce, pu.destructionForce),
+                Random.Range(-pu.destructionForce, pu.destructionForce)
+            );
+            child.gameObject.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
+        }
     }
 
     // Operates with the selection of the gems
