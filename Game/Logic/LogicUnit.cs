@@ -134,6 +134,7 @@ public class LogicUnit : MonoBehaviour {
             }
         }
 
+        // Destruction
         for (int x = 0; x < gSizeX; ++x)
         {
             for (int y = 0; y < gSizeY; y++)
@@ -141,7 +142,31 @@ public class LogicUnit : MonoBehaviour {
                 if (needToDestroy[x, y])
                 {
                     gu.DestroyGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
-                    DestroyGem(x, y);
+                    DestroyGem(x, y);                    
+                }
+            }
+        }
+
+        // Gravity
+        for (int x = 0; x < gSizeX; ++x)
+        {
+            for (int y = 0; y < gSizeY; y++)
+            {
+                if (grid[x, y].IsEmpty())
+                {
+                    int offset = 1;
+                    for (int i = y + 1; i < gSizeY; ++i)
+                    {
+                        if (!grid[x, i].IsEmpty())
+                        {
+                            gu.SwapGems(new Vector2(x, i), new Vector2(x, i - offset));
+                            SwapGems(new Vector2(x, i), new Vector2(x, i - offset));
+                        } else
+                        {
+                            offset++;
+                        }                   
+                    }
+                    break;
                 }
             }
         }

@@ -57,8 +57,15 @@ public class GraphicsUnit : MonoBehaviour {
 
     public void SwapGems(Vector2 pos1, Vector2 pos2)
     {
-        StartCoroutine(MoveGem(grid[(int)pos1.x, (int)pos1.y], (int)pos2.x, (int)pos2.y));
-        StartCoroutine(MoveGem(grid[(int)pos2.x, (int)pos2.y], (int)pos1.x, (int)pos1.y));
+        // * In case we perform swap with empty cell
+        if (grid[(int)pos1.x, (int)pos1.y] != null) // *
+        {
+            StartCoroutine(MoveGem(grid[(int)pos1.x, (int)pos1.y], (int)pos2.x, (int)pos2.y));
+        }
+        if (grid[(int)pos2.x, (int)pos2.y] != null) // *
+        {
+            StartCoroutine(MoveGem(grid[(int)pos2.x, (int)pos2.y], (int)pos1.x, (int)pos1.y));
+        }
 
         GameObject temp = grid[(int)pos1.x, (int)pos1.y];
         grid[(int)pos1.x, (int)pos1.y] = grid[(int)pos2.x, (int)pos2.y];
@@ -68,12 +75,13 @@ public class GraphicsUnit : MonoBehaviour {
     public void DestroyGem(int x, int y, int color, int bonus)
     {
         Destroy(grid[x, y]);
+        grid[x, y] = null;
 
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y;
 
-        GameObject dGemPrefab = dGems[lu.grid[x, y].Gem.Color];
+        GameObject dGemPrefab = dGems[color];
         if (bonus != -1)
         {
             // Change 'dGemPrefab' to corresponding destroyed bonus
@@ -106,6 +114,7 @@ public class GraphicsUnit : MonoBehaviour {
             {
                 if (gem.Equals(grid[x, y]))
                 {
+                    //Debug.Log(x + " - " + y);
                     if (lu.IsGemValid(x, y))
                     {
                         if (lu.NoOneSelected())
