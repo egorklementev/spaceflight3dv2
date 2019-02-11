@@ -64,6 +64,10 @@ public class LogicUnit : MonoBehaviour {
 
     public void DestroyGem(int x, int y)
     {
+        if (grid[x, y].Gem.Bonus != -1)
+        {
+            Debug.Log("Bonus number " + grid[x, y].Gem.Bonus + " activated at position [" + x + ", " + y + "]");
+        }
         grid[x, y].Gem = null;
     }
 
@@ -199,7 +203,7 @@ public class LogicUnit : MonoBehaviour {
                 if (grid[x, y].IsEmpty())
                 {
                     grid[x, y].Gem = GetRandomGem();
-                    gu.SpawnGem(x, y);
+                    gu.SpawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
                 }
             }
         }

@@ -81,7 +81,8 @@ public class ParamUnit : MonoBehaviour {
 
     public int GetRandomBonus()
     {
-        return -1; // MAKE IT!
+        return Random.Range(0, 100) < bonusesPercentage ? 
+            Random.Range(1, bonusesNumber + 1) : -1;
     }
 
 }

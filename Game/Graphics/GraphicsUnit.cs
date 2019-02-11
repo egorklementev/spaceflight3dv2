@@ -6,8 +6,8 @@ public class GraphicsUnit : MonoBehaviour {
     //public RectTransform transform;
 
     [Header("Prefabs")]
-    public GameObject[] gems;
-    public GameObject[] dGems;
+    public PrefabSet[] gems;
+    public PrefabSet[] dGems;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -34,6 +34,8 @@ public class GraphicsUnit : MonoBehaviour {
             pu.gemSize / 2f,
             0);
         transform.localScale *= 45f;
+
+
     }
 
     private void Update()
@@ -41,13 +43,13 @@ public class GraphicsUnit : MonoBehaviour {
 
     }
     
-    public void SpawnGem(int x, int y)
+    public void SpawnGem(int x, int y, int color, int bonus)
     {
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y + (pu.gemSize + pu.gemOffset) * (gSizeY + 1); // Higher than the grid         
-
-        grid[x, y] = Instantiate(gems[lu.grid[x, y].Gem.Color]);
+      
+        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus].prefabs[color]);
         grid[x, y].transform.parent = transform;
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         grid[x, y].transform.position = position;
@@ -80,14 +82,8 @@ public class GraphicsUnit : MonoBehaviour {
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y;
-
-        GameObject dGemPrefab = dGems[color];
-        if (bonus != -1)
-        {
-            // Change 'dGemPrefab' to corresponding destroyed bonus
-        }
-
-        GameObject dGem = Instantiate(dGemPrefab);
+        
+        GameObject dGem = Instantiate(dGems[bonus == -1 ? 0 : bonus].prefabs[color]);
         Destroy(dGem, pu.dPartsLifetime);
         dGem.transform.parent = transform;
         dGem.transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
@@ -202,4 +198,5 @@ public class GraphicsUnit : MonoBehaviour {
         }
         //WorkingObjs--;
     }
+    
 }
