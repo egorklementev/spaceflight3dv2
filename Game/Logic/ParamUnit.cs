@@ -25,6 +25,8 @@ public class ParamUnit : MonoBehaviour {
     [Range(0, 100)]
     public int bonusesPercentage;
     public int bonusesNumber;
+    public float meteorMoveSpeed = 1f;
+    public float meteorOffset = 10f;
     [Space(10)]
 
     [Header("Units' refs")]

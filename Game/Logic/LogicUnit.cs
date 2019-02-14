@@ -66,7 +66,15 @@ public class LogicUnit : MonoBehaviour {
     {
         if (grid[x, y].Gem.Bonus != -1)
         {
-            Debug.Log("Bonus number " + grid[x, y].Gem.Bonus + " activated at position [" + x + ", " + y + "]");
+            needToCheck = true;
+            switch (grid[x, y].Gem.Bonus)
+            {
+                case 1:
+                    gu.ActivateBonus1(x, y);
+                    break;
+                case 2:
+                    break;
+            }            
         }
         grid[x, y].Gem = null;
     }
@@ -91,13 +99,15 @@ public class LogicUnit : MonoBehaviour {
             int currentEqual = 1;
             while (curX < (gSizeX - 1))
             {
-                while (curX < (gSizeX - 1) &&
+                while (curX < (gSizeX - 1) && 
+                    !grid[curX, y].IsEmpty() && // No need to check empty cell
+                    !grid[curX + 1, y].IsEmpty() &&
                     grid[curX, y].Gem.Color == grid[curX + 1, y].Gem.Color)
                 {
                     currentEqual++;
                     curX++;
                 }
-
+                
                 if (currentEqual >= pu.sequenceSize)
                 {
                     for (int x = curX - currentEqual + 1; x <= curX; ++x)
@@ -118,13 +128,15 @@ public class LogicUnit : MonoBehaviour {
             int currentEqual = 1;
             while (curY < (gSizeY - 1))
             {
-                while (curY < (gSizeY - 1) &&
+                while (curY < (gSizeY - 1) && 
+                    !grid[x, curY].IsEmpty() && // No need to check empty cell
+                    !grid[x, curY + 1].IsEmpty() &&
                     grid[x, curY].Gem.Color == grid[x, curY + 1].Gem.Color)
                 {
                     currentEqual++;
                     curY++;
                 }
-
+                
                 if (currentEqual >= pu.sequenceSize)
                 {
                     for (int y = curY - currentEqual + 1; y <= curY; ++y)
@@ -202,6 +214,7 @@ public class LogicUnit : MonoBehaviour {
             {
                 if (grid[x, y].IsEmpty())
                 {
+                    needToCheck = true;
                     grid[x, y].Gem = GetRandomGem();
                     gu.SpawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
                 }

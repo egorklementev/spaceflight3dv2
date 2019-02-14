@@ -8,6 +8,8 @@ public class GraphicsUnit : MonoBehaviour {
     [Header("Prefabs")]
     public PrefabSet[] gems;
     public PrefabSet[] dGems;
+    public GameObject meteorPrefab;
+    public ParticleSystem explosionPrefab;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -100,6 +102,23 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }
 
+    public void ActivateBonus1(int x1, int y1)
+    {
+        int x = x1; 
+        int y = y1;
+        while ((x == x1 && y == y1) || lu.grid[x, y].IsEmpty())
+        {
+            x = Random.Range(0, gSizeX);
+            y = Random.Range(0, gSizeY);
+        }         
+        GameObject meteor = Instantiate(meteorPrefab);
+        meteor.transform.parent = transform;
+        meteor.transform.position = grid[x, y].transform.position;
+        meteor.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+        meteor.transform.Translate(0f, pu.meteorOffset, -1f);
+        StartCoroutine(MoveMeteor(meteor, x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus));
+    }
+
     // Operates with the selection of the gems
     public void SelectGem(GameObject gem)
     {
@@ -183,6 +202,39 @@ public class GraphicsUnit : MonoBehaviour {
             gem.transform.position = Vector3.SmoothDamp(gem.transform.position, newPosition, ref velocity, pu.gemMoveTime);
             yield return new WaitForEndOfFrame();
         }
+        WorkingObjs--;
+    }
+
+    private IEnumerator MoveMeteor(GameObject meteor, int x, int y, int color, int bonus)
+    {
+        WorkingObjs++;
+        Vector3 start = meteor.transform.position;
+        Vector3 newPosition = transform.position;
+        newPosition.x += (pu.gemSize + pu.gemOffset) * x;
+        newPosition.y += (pu.gemSize + pu.gemOffset) * y + pu.gemSize;
+        float t = 0f;
+        while (t <= 1f)
+        {
+            t += (pu.meteorMoveSpeed / (start - newPosition).magnitude) * Time.fixedDeltaTime;
+            meteor.transform.position = Vector3.Lerp(start, newPosition, t);
+            yield return new WaitForFixedUpdate();
+        }
+        DestroyGem(x, y, color, bonus);
+        lu.DestroyGem(x, y);
+
+        // Trail is destroying separately to prevent particles dissapearing
+        GameObject trail = meteor.transform.Find("Trail").gameObject;
+        trail.GetComponent<ParticleSystem>().Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        trail.transform.parent = transform;
+        trail.transform.localScale = new Vector3(1f, 1f, 1f);
+        Destroy(trail, trail.GetComponent<ParticleSystem>().main.startLifetime.constant);
+        ParticleSystem explosion = Instantiate(explosionPrefab);
+        explosion.transform.parent = transform;
+        explosion.transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
+        newPosition.y -= pu.gemSize;
+        explosion.transform.position = newPosition;
+
+        Destroy(meteor);
         WorkingObjs--;
     }
 
