@@ -6,7 +6,8 @@ public class GraphicsUnit : MonoBehaviour {
     //public RectTransform transform;
 
     [Header("Prefabs")]
-    public PrefabSet[] gems;
+    public Mesh[] gridGems;
+    public GameObject[] gems;
     public PrefabSet[] dGems;
     public GameObject meteorPrefab;
     public ParticleSystem explosionPrefab;
@@ -24,7 +25,9 @@ public class GraphicsUnit : MonoBehaviour {
 
     private int gSizeX;
     private int gSizeY;
-    
+
+    private Color[] colors;
+
     private void Awake()
     {
         WorkingObjs = 0;
@@ -37,7 +40,15 @@ public class GraphicsUnit : MonoBehaviour {
             0);
         transform.localScale *= 45f;
 
-
+        colors = new Color[10];
+        colors[0] = Color.blue;
+        colors[1] = Color.green;
+        colors[2] = Color.magenta;
+        colors[3] = new Color(1, 165f/255f, 0);
+        colors[4] = Color.red;
+        colors[5] = new Color(0, 1, 1);
+        colors[6] = Color.white;
+        colors[7] = Color.yellow;
     }
 
     private void Update()
@@ -51,11 +62,13 @@ public class GraphicsUnit : MonoBehaviour {
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y + (pu.gemSize + pu.gemOffset) * (gSizeY + 1); // Higher than the grid         
       
-        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus].prefabs[color]);
+        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus]);
         grid[x, y].transform.parent = transform;
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         grid[x, y].transform.position = position;
-        
+        grid[x, y].GetComponent<Renderer>().material.color = colors[color];
+        grid[x, y].GetComponent<MeshFilter>().mesh = gridGems[color];
+
         StartCoroutine(MoveGem(grid[x, y], x, y));
     }
 
@@ -99,6 +112,7 @@ public class GraphicsUnit : MonoBehaviour {
                 Random.Range(-pu.destructionForce, pu.destructionForce)
             );
             child.gameObject.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
+            child.gameObject.GetComponent<Renderer>().material.color = colors[color];
         }
     }
 
