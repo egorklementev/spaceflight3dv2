@@ -5,11 +5,15 @@ public class GraphicsUnit : MonoBehaviour {
 
     //public RectTransform transform;
 
+    [Header("Meshes")]
+    public Mesh[] gridGemsMeshes;
+    public Mesh[] gridGemsDParts;
+    [Space(10)]
+
     [Header("Prefabs")]
-    public Mesh[] gridGems;
-    public GameObject[] gems;
-    public PrefabSet[] dGems;
-    public GameObject meteorPrefab;
+    public GameObject[] gems; // Gems including bonuses
+    public GameObject gemPart; // Part of the destroyed gem
+    public GameObject meteorPrefab; // Meteor falling on the grid
     public ParticleSystem explosionPrefab;
     [Space(10)]
 
@@ -67,7 +71,7 @@ public class GraphicsUnit : MonoBehaviour {
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
-        grid[x, y].GetComponent<MeshFilter>().mesh = gridGems[color];
+        grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];
 
         StartCoroutine(MoveGem(grid[x, y], x, y));
     }
@@ -97,23 +101,26 @@ public class GraphicsUnit : MonoBehaviour {
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y;
-        
-        GameObject dGem = Instantiate(dGems[bonus == -1 ? 0 : bonus].prefabs[color]);
-        Destroy(dGem, pu.dPartsLifetime);
-        dGem.transform.parent = transform;
-        dGem.transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
-        dGem.transform.position = position;
 
-        foreach (Transform child in dGem.transform)
+        int num = Random.Range(2, 4);
+        for (int i = 0; i < num; i++)
         {
+            GameObject dGemPart = Instantiate(gemPart);
+            Destroy(dGemPart, pu.dPartsLifetime);
+            dGemPart.transform.parent = transform;
+            dGemPart.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+            dGemPart.transform.position = position;
+            dGemPart.GetComponent<Renderer>().material.color = colors[color];
+            dGemPart.GetComponent<MeshFilter>().mesh = gridGemsDParts[Random.Range(0, 3)];
+            dGemPart.GetComponent<BoxCollider>().size = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+
             Vector3 forceDirection = new Vector3(
                 Random.Range(-pu.destructionForce, pu.destructionForce),
                 Random.Range(-pu.destructionForce, pu.destructionForce),
                 Random.Range(-pu.destructionForce, pu.destructionForce)
             );
-            child.gameObject.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
-            child.gameObject.GetComponent<Renderer>().material.color = colors[color];
-        }
+            dGemPart.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
+        }        
     }
 
     public void ActivateBonus1(int x1, int y1)

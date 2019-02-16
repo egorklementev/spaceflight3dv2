@@ -24,7 +24,7 @@ public class LogicUnit : MonoBehaviour {
     private int gSizeY;
 
     private bool needToCheck = false;
-    
+
     private void Awake() {        
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
@@ -66,7 +66,6 @@ public class LogicUnit : MonoBehaviour {
     {
         if (grid[x, y].Gem.Bonus != -1)
         {
-            needToCheck = true;
             switch (grid[x, y].Gem.Bonus)
             {
                 case 1:
@@ -177,15 +176,16 @@ public class LogicUnit : MonoBehaviour {
                         {
                             gu.SwapGems(new Vector2(x, i), new Vector2(x, i - offset));
                             SwapGems(new Vector2(x, i), new Vector2(x, i - offset));
-                        } else
+                        }
+                        else
                         {
                             offset++;
-                        }                   
+                        }
                     }
                     break;
                 }
             }
-        }
+        }        
     }
 
     // Checks if it is valid to select the gem or not
@@ -237,7 +237,7 @@ public class LogicUnit : MonoBehaviour {
         gemST = UNSELECTED;
     }
 
-    // Condition to swap
+    // Conditions to swap
     public bool TwoSelected()
     {
         return gemSO != UNSELECTED && gemST != UNSELECTED;
