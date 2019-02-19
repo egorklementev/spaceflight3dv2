@@ -126,13 +126,17 @@ public class GraphicsUnit : MonoBehaviour {
     public void ActivateBonus1(int x1, int y1)
     {
         int x = Random.Range(0, gSizeX);
-        int y = Random.Range(0, gSizeY);                 
+        int y = Random.Range(0, gSizeY);
+
         GameObject meteor = Instantiate(meteorPrefab);
         meteor.transform.parent = transform;
-        meteor.transform.position = grid[x, y].transform.position;
+        meteor.transform.position = GetGraphPos(x, y);
         meteor.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
         meteor.transform.Translate(0f, pu.meteorOffset, -1f);
-        StartCoroutine(MoveMeteor(meteor, x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus));
+        StartCoroutine(MoveMeteor(
+            meteor, x, y,
+            lu.grid[x, y].IsEmpty() ? 0 : lu.grid[x, y].Gem.Color,
+            lu.grid[x, y].IsEmpty() ? 0 : lu.grid[x, y].Gem.Bonus));
     }
 
     // Operates with the selection of the gems
@@ -234,13 +238,13 @@ public class GraphicsUnit : MonoBehaviour {
             t += (pu.meteorMoveSpeed / (start - newPosition).magnitude) * Time.fixedDeltaTime;
             meteor.transform.position = Vector3.Lerp(start, newPosition, t);
             yield return new WaitForFixedUpdate();
-        }
+        }       
         if (!lu.grid[x, y].IsEmpty())
         {
             DestroyGem(x, y, color, bonus);
             lu.DestroyGem(x, y);
         }
-
+            
         // Trail is destroying separately to prevent particles dissapearing
         GameObject trail = meteor.transform.Find("Trail").gameObject;
         trail.GetComponent<ParticleSystem>().Stop(true, ParticleSystemStopBehavior.StopEmitting);
@@ -270,4 +274,12 @@ public class GraphicsUnit : MonoBehaviour {
         //WorkingObjs--;
     }
     
+    // Returns graphical position given x and y on the grid
+    private Vector3 GetGraphPos(int x, int y)
+    {
+        return new Vector3(
+            transform.position.x + (pu.gemSize + pu.gemOffset) * x,
+            transform.position.y + (pu.gemSize + pu.gemOffset) * y, 
+            transform.position.z);
+    }
 }
