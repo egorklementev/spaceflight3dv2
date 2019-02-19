@@ -125,13 +125,8 @@ public class GraphicsUnit : MonoBehaviour {
 
     public void ActivateBonus1(int x1, int y1)
     {
-        int x = x1; 
-        int y = y1;
-        while ((x == x1 && y == y1) || lu.grid[x, y].IsEmpty())
-        {
-            x = Random.Range(0, gSizeX);
-            y = Random.Range(0, gSizeY);
-        }         
+        int x = Random.Range(0, gSizeX);
+        int y = Random.Range(0, gSizeY);                 
         GameObject meteor = Instantiate(meteorPrefab);
         meteor.transform.parent = transform;
         meteor.transform.position = grid[x, y].transform.position;
@@ -240,8 +235,11 @@ public class GraphicsUnit : MonoBehaviour {
             meteor.transform.position = Vector3.Lerp(start, newPosition, t);
             yield return new WaitForFixedUpdate();
         }
-        DestroyGem(x, y, color, bonus);
-        lu.DestroyGem(x, y);
+        if (!lu.grid[x, y].IsEmpty())
+        {
+            DestroyGem(x, y, color, bonus);
+            lu.DestroyGem(x, y);
+        }
 
         // Trail is destroying separately to prevent particles dissapearing
         GameObject trail = meteor.transform.Find("Trail").gameObject;
