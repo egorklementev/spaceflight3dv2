@@ -64,7 +64,7 @@ public class ParamUnit : MonoBehaviour {
         #endregion
 
         // Size of the gems sides
-        float pixelsInUnit = Screen.height / 10f;
+        float pixelsInUnit = Screen.height / 10f; // Size of the camera is 5
         gemSize = Mathf.Min(
             screenBound.x * Screen.width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
             screenBound.y * Screen.height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)

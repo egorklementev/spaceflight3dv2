@@ -72,6 +72,10 @@ public class GraphicsUnit : MonoBehaviour {
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
         grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];
+        if (bonus == 2)
+        {
+            grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[8];
+        }
 
         StartCoroutine(MoveGem(grid[x, y], x, y));
     }
