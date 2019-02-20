@@ -24,6 +24,7 @@ public class LogicUnit : MonoBehaviour {
     private int gSizeY;
 
     private bool needToCheck = false;
+    private bool bonusIsWorking = false;
 
     private void Awake() {        
         gSizeX = (int)pu.gridSize.x;
@@ -61,7 +62,7 @@ public class LogicUnit : MonoBehaviour {
         };
         if (gem.Bonus == 2)
         {
-            gem.Color = 0;
+            gem.Color = 8;
         } else
         {
             gem.Color = pu.GetRandomColor();
@@ -79,7 +80,24 @@ public class LogicUnit : MonoBehaviour {
                 case 1:
                     gu.ActivateBonus1(x, y);
                     break;
-                case 2:
+                case 3:
+                    if (!bonusIsWorking)
+                    {
+                        bonusIsWorking = true;
+                        int color = grid[x, y].Gem.Color;
+                        for (int _x = 0; _x < gSizeX; _x++)
+                        {
+                            for (int _y = 0; _y < gSizeY; _y++)
+                            {
+                                if (!grid[_x, _y].IsEmpty() && grid[_x, _y].Gem.Color == color)
+                                {
+                                    gu.DestroyGem(_x, _y, color);
+                                    DestroyGem(_x, _y);
+                                }
+                            }
+                        }
+                    }
+                    bonusIsWorking = false;
                     break;
             }            
         }
@@ -328,9 +346,9 @@ public class LogicUnit : MonoBehaviour {
         {
             for (int y = 0; y < gSizeY; y++)
             {
-                if (needToDestroy[x, y])
+                if (!grid[x, y].IsEmpty() && needToDestroy[x, y])
                 {
-                    gu.DestroyGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    gu.DestroyGem(x, y, grid[x, y].Gem.Color);
                     DestroyGem(x, y);                    
                 }
             }

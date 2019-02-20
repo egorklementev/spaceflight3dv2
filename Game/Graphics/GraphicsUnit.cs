@@ -53,6 +53,7 @@ public class GraphicsUnit : MonoBehaviour {
         colors[5] = new Color(0, 1, 1);
         colors[6] = Color.white;
         colors[7] = Color.yellow;
+        colors[8] = Color.gray;
     }
 
     private void Update()
@@ -71,8 +72,8 @@ public class GraphicsUnit : MonoBehaviour {
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
-        grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];
-        if (bonus == 2)
+        grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];        
+        if (bonus == 3)
         {
             grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[8];
         }
@@ -97,7 +98,7 @@ public class GraphicsUnit : MonoBehaviour {
         grid[(int)pos2.x, (int)pos2.y] = temp;
     }
 
-    public void DestroyGem(int x, int y, int color, int bonus)
+    public void DestroyGem(int x, int y, int color)
     {
         Destroy(grid[x, y]);
         grid[x, y] = null;
@@ -127,10 +128,10 @@ public class GraphicsUnit : MonoBehaviour {
         }        
     }
 
-    public void ActivateBonus1(int x1, int y1)
+    public void ActivateBonus1(int x, int y)
     {
-        int x = Random.Range(0, gSizeX);
-        int y = Random.Range(0, gSizeY);
+        int _x = Random.Range(0, gSizeX);
+        int _y = Random.Range(0, gSizeY);
 
         GameObject meteor = Instantiate(meteorPrefab);
         meteor.transform.parent = transform;
@@ -138,11 +139,10 @@ public class GraphicsUnit : MonoBehaviour {
         meteor.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
         meteor.transform.Translate(0f, pu.meteorOffset, -1f);
         StartCoroutine(MoveMeteor(
-            meteor, x, y,
-            lu.grid[x, y].IsEmpty() ? 0 : lu.grid[x, y].Gem.Color,
-            lu.grid[x, y].IsEmpty() ? 0 : lu.grid[x, y].Gem.Bonus));
+            meteor, _x, _y,
+            lu.grid[_x, _y].IsEmpty() ? 0 : lu.grid[_x, _y].Gem.Color));
     }
-
+    
     // Operates with the selection of the gems
     public void SelectGem(GameObject gem)
     {
@@ -229,13 +229,15 @@ public class GraphicsUnit : MonoBehaviour {
         WorkingObjs--;
     }
 
-    private IEnumerator MoveMeteor(GameObject meteor, int x, int y, int color, int bonus)
+    private IEnumerator MoveMeteor(GameObject meteor, int x, int y, int color)
     {
+        while(WorkingObjs > 0)
+        {
+            yield return new WaitForFixedUpdate();
+        }
         WorkingObjs++;
         Vector3 start = meteor.transform.position;
-        Vector3 newPosition = transform.position;
-        newPosition.x += (pu.gemSize + pu.gemOffset) * x;
-        newPosition.y += (pu.gemSize + pu.gemOffset) * y + pu.gemSize;
+        Vector3 newPosition = GetGraphPos(x, y);
         float t = 0f;
         while (t <= 1f)
         {
@@ -245,7 +247,7 @@ public class GraphicsUnit : MonoBehaviour {
         }       
         if (!lu.grid[x, y].IsEmpty())
         {
-            DestroyGem(x, y, color, bonus);
+            DestroyGem(x, y, color);
             lu.DestroyGem(x, y);
         }
             
