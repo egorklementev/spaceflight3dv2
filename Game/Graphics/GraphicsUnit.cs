@@ -223,6 +223,10 @@ public class GraphicsUnit : MonoBehaviour {
         newPosition.y += (pu.gemSize + pu.gemOffset) * y;
         while (velocity.sqrMagnitude > .001f)
         {
+            if (gem == null)
+            {
+                break;
+            }
             gem.transform.position = Vector3.SmoothDamp(gem.transform.position, newPosition, ref velocity, pu.gemMoveTime);
             yield return new WaitForEndOfFrame();
         }
