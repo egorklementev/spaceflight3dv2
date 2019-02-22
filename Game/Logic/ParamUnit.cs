@@ -24,7 +24,7 @@ public class ParamUnit : MonoBehaviour {
     [Header("Bonus params")]
     [Range(0, 100)]
     public int bonusesPercentage;
-    public int bonusesNumber;
+    public int[] permittedBonuses;
     public float meteorMoveSpeed = 1f;
     public float meteorOffset = 10f;
     [Space(10)]
@@ -81,10 +81,14 @@ public class ParamUnit : MonoBehaviour {
         return colorVector[Random.Range(0, colorsAvailable)];
     }
 
+    // Bonus 1 - meteor
+    // Bonus 2 - colorless
+    // Bonus 3 - same color
+    // Bonus 4 - obstacle
     public int GetRandomBonus()
     {
-        return Random.Range(0, 100) < bonusesPercentage ? 
-            Random.Range(1, bonusesNumber + 1) : -1;
+        return Random.Range(0, 100) < bonusesPercentage ?
+            permittedBonuses[Random.Range(0, permittedBonuses.Length)] : -1;
     }
 
 }
