@@ -60,9 +60,22 @@ public class LogicUnit : MonoBehaviour {
         {
             Bonus = pu.GetRandomBonus()
         };
-        if (gem.Bonus == 2)
+
+        // Some specific colors are needed for some bonuses
+        if (gem.Bonus != -1)
         {
-            gem.Color = 8;
+            switch(gem.Bonus)
+            {
+                case 2:
+                    gem.Color = 8;
+                    break;
+                case 4:
+                    gem.Color = 9;
+                    break;
+                default:
+                    gem.Color = pu.GetRandomColor();
+                    break;
+            }
         } else
         {
             gem.Color = pu.GetRandomColor();
@@ -346,7 +359,9 @@ public class LogicUnit : MonoBehaviour {
         {
             for (int y = 0; y < gSizeY; y++)
             {
-                if (!grid[x, y].IsEmpty() && needToDestroy[x, y])
+                if (!grid[x, y].IsEmpty() && 
+                    needToDestroy[x, y] &&
+                    grid[x, y].Gem.Bonus != 4)
                 {
                     gu.DestroyGem(x, y, grid[x, y].Gem.Color);
                     DestroyGem(x, y);                    

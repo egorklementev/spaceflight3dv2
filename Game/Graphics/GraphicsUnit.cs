@@ -54,6 +54,7 @@ public class GraphicsUnit : MonoBehaviour {
         colors[6] = Color.white;
         colors[7] = Color.yellow;
         colors[8] = Color.gray;
+        colors[9] = Color.white;
     }
 
     private void Update()
