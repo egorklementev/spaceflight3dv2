@@ -14,6 +14,8 @@ public class GraphicsUnit : MonoBehaviour {
     public GameObject[] gems; // Gems including bonuses
     public GameObject gemPart; // Part of the destroyed gem
     public GameObject meteorPrefab; // Meteor falling on the grid
+    public GameObject lightningBar; 
+    public GameObject lightningPrefab; 
     public ParticleSystem explosionPrefab;
     [Space(10)]
 
@@ -25,6 +27,7 @@ public class GraphicsUnit : MonoBehaviour {
     [HideInInspector]
     public int WorkingObjs { get; set; }
 
+    private GameObject[] lightnings;
     private GameObject[,] grid;
 
     private int gSizeX;
@@ -42,7 +45,13 @@ public class GraphicsUnit : MonoBehaviour {
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
             pu.gemSize / 2f,
             0);
-        transform.localScale *= 45f;
+        transform.localScale *= 45f; // Magic number
+
+        lightnings = new GameObject[pu.maximumEnergy];
+        for (int i = 0; i < pu.maximumEnergy; i++) 
+        {
+            AddSuboptimal(i);
+        }
 
         colors = new Color[10];
         colors[0] = Color.blue;
@@ -68,8 +77,7 @@ public class GraphicsUnit : MonoBehaviour {
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y + (pu.gemSize + pu.gemOffset) * (gSizeY + 1); // Higher than the grid         
       
-        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus]);
-        grid[x, y].transform.parent = transform;
+        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus], transform);
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
@@ -213,7 +221,21 @@ public class GraphicsUnit : MonoBehaviour {
             StartCoroutine(ScaleGem(grid[(int)lu.gemST.x, (int)lu.gemST.y], normalScale, pu.gemScaleSpeed));
         }
     }
-    
+
+    public void AddSuboptimal(int i)
+    {
+        lightnings[i] = Instantiate(lightningPrefab, lightningBar.transform);
+        lightnings[i].transform.localScale = new Vector3(1.5f * pu.gemSize, pu.gemSize, pu.gemSize);
+        lightnings[i].transform.Translate(
+            .75f * lightnings[i].transform.localScale.x * i, 0f, 0f
+            );
+    }
+
+    public void RemoveSuboptimal()
+    {
+
+    }
+
     // Moves given gem from it's current position to specific x-y position on the grid
     private IEnumerator MoveGem(GameObject gem, int x, int y)
     {

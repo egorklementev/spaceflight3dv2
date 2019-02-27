@@ -17,6 +17,8 @@ public class LogicUnit : MonoBehaviour {
     public Vector2 gemST = UNSELECTED;
     [HideInInspector]
     public bool readyToSwap = false;
+    [HideInInspector]
+    public int suboptimalMoves = 3;
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
@@ -24,6 +26,7 @@ public class LogicUnit : MonoBehaviour {
     private int gSizeY;
 
     private bool needToCheck = false;
+    private bool wasSwap = false;
     private bool bonusIsWorking = false;
 
     private void Awake() {        
@@ -355,6 +358,7 @@ public class LogicUnit : MonoBehaviour {
         #endregion
 
         // Destruction
+        bool wasDestroyed = false;
         for (int x = 0; x < gSizeX; ++x)
         {
             for (int y = 0; y < gSizeY; y++)
@@ -363,11 +367,20 @@ public class LogicUnit : MonoBehaviour {
                     needToDestroy[x, y] &&
                     grid[x, y].Gem.Bonus != 4)
                 {
+                    wasDestroyed = true;
                     gu.DestroyGem(x, y, grid[x, y].Gem.Color);
                     DestroyGem(x, y);                    
                 }
             }
         }
+
+        if (wasSwap && !wasDestroyed)
+        {
+            suboptimalMoves--;
+            // Call graphics
+        }
+            
+        wasSwap = false;
 
         // Gravity
         for (int x = 0; x < gSizeX; ++x)
@@ -435,6 +448,7 @@ public class LogicUnit : MonoBehaviour {
         grid[(int)pos1.x, (int)pos1.y].Gem = grid[(int)pos2.x, (int)pos2.y].Gem;
         grid[(int)pos2.x, (int)pos2.y].Gem = temp;
         needToCheck = true;
+        wasSwap = true;
     }
 
     // If less than two gems were selected

@@ -19,6 +19,7 @@ public class ParamUnit : MonoBehaviour {
     [Range(3, 5)]
     public int sequenceSize = 3;
     public bool randomizeColors = false;
+    public int maximumEnergy = 3;
     [Space(10)]
 
     [Header("Bonus params")]
