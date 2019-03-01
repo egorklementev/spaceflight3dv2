@@ -8,7 +8,7 @@ public class InputUnit : MonoBehaviour {
     public ParamUnit pu;
 
     [HideInInspector]
-    public bool IsSleeping { get; set; }
+    public bool wasSwap = false;
 
     private void Start()
     {
@@ -27,6 +27,8 @@ public class InputUnit : MonoBehaviour {
 
                     gu.ResetSelection();
                     lu.ResetSelection();
+
+                    wasSwap = true;
                 }
                 else
                 {

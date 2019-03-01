@@ -162,7 +162,6 @@ public class GraphicsUnit : MonoBehaviour {
             {
                 if (gem.Equals(grid[x, y]))
                 {
-                    //Debug.Log(x + " - " + y);
                     if (lu.IsGemValid(x, y))
                     {
                         if (lu.NoOneSelected())
@@ -222,18 +221,23 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }
 
-    public void AddSuboptimal(int i)
+    public void EnableSuboptimal(int i)
+    {
+
+    }
+
+    public void DisableSuboptimal(int i)
+    {
+
+    }
+
+    private void AddSuboptimal(int i)
     {
         lightnings[i] = Instantiate(lightningPrefab, lightningBar.transform);
         lightnings[i].transform.localScale = new Vector3(1.5f * pu.gemSize, pu.gemSize, pu.gemSize);
         lightnings[i].transform.Translate(
             .75f * lightnings[i].transform.localScale.x * i, 0f, 0f
             );
-    }
-
-    public void RemoveSuboptimal()
-    {
-
     }
 
     // Moves given gem from it's current position to specific x-y position on the grid
