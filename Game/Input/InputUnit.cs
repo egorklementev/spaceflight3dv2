@@ -10,13 +10,14 @@ public class InputUnit : MonoBehaviour {
     [HideInInspector]
     public bool wasSwap = false;
 
+    private bool isGameOver = false;
+    
     private void Start()
-    {
-    }
-
+    {}
+    
     private void Update()
     {
-        if (gu.WorkingObjs == 0)
+        if (gu.WorkingObjs == 0 && !isGameOver)
         {
             if (Input.GetMouseButtonUp(0))
             {
@@ -63,4 +64,10 @@ public class InputUnit : MonoBehaviour {
             Application.Quit();
         }
     }
+
+    public void SetGameOver()
+    {
+        isGameOver = true;
+    }
+
 }

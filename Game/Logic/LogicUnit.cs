@@ -53,6 +53,11 @@ public class LogicUnit : MonoBehaviour {
                 CheckGemGrid();
                 FillGemGrid();
             }
+            if (suboptimalMoves == -1)
+            {
+                gu.DrawEndScreen(false);
+                iu.SetGameOver(); // Disable input
+            }
         }
 	}
     
@@ -376,7 +381,8 @@ public class LogicUnit : MonoBehaviour {
         if (iu.wasSwap && !wasDestroyed)
         {
             suboptimalMoves--;
-            // Call graphics
+            if (suboptimalMoves >= 0)
+                gu.DisableSuboptimal(suboptimalMoves);
         }
         iu.wasSwap = false;
 

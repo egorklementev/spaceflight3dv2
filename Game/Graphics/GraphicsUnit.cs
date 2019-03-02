@@ -2,9 +2,7 @@
 using System.Collections;
 
 public class GraphicsUnit : MonoBehaviour {
-
-    //public RectTransform transform;
-
+    
     [Header("Meshes")]
     public Mesh[] gridGemsMeshes;
     public Mesh[] gridGemsDParts;
@@ -17,6 +15,11 @@ public class GraphicsUnit : MonoBehaviour {
     public GameObject lightningBar; 
     public GameObject lightningPrefab; 
     public ParticleSystem explosionPrefab;
+    [Space(10)]
+
+    [Header("UI")]
+    public GameObject winText;
+    public GameObject loseText;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -221,6 +224,18 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }
 
+    public void DrawEndScreen(bool isVictory)
+    {
+        if (isVictory)
+        {
+            winText.SetActive(true);
+        } else
+        {
+            loseText.SetActive(true);
+        }
+        // Load to result screen
+    }
+
     public void EnableSuboptimal(int i)
     {
 
@@ -228,7 +243,12 @@ public class GraphicsUnit : MonoBehaviour {
 
     public void DisableSuboptimal(int i)
     {
+        lightnings[i].GetComponent<Rotation>().enabled = false;
 
+        foreach (Transform child in lightnings[i].transform)
+        {
+            child.gameObject.GetComponent<Renderer>().material.color /= 5f;
+        }
     }
 
     private void AddSuboptimal(int i)
