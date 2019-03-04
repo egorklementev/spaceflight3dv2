@@ -119,6 +119,9 @@ public class LogicUnit : MonoBehaviour {
                     }
                     bonusIsWorking = false;
                     break;
+                case 5:
+                    IncreaseSuboptimal();
+                    break;
             }            
         }
         grid[x, y].Gem = null;
@@ -380,9 +383,7 @@ public class LogicUnit : MonoBehaviour {
         
         if (iu.wasSwap && !wasDestroyed)
         {
-            suboptimalMoves--;
-            if (suboptimalMoves >= 0)
-                gu.DisableSuboptimal(suboptimalMoves);
+            DecreaseSubpotimal();            
         }
         iu.wasSwap = false;
 
@@ -410,6 +411,22 @@ public class LogicUnit : MonoBehaviour {
                 }
             }
         }        
+    }
+
+    private void IncreaseSuboptimal()
+    {
+        if (suboptimalMoves < pu.maximumEnergy)
+        {
+            gu.SwitchEnergy(suboptimalMoves);
+            suboptimalMoves++;
+        }
+    }
+
+    private void DecreaseSubpotimal()
+    {
+        suboptimalMoves--;
+        if (suboptimalMoves >= 0)
+            gu.SwitchEnergy(suboptimalMoves);
     }
 
     // Checks if it is valid to select the gem or not
@@ -446,6 +463,7 @@ public class LogicUnit : MonoBehaviour {
         }
     }
     
+    //
     public void SwapGems(Vector2 pos1, Vector2 pos2)
     {
         Gem temp = grid[(int)pos1.x, (int)pos1.y].Gem;
@@ -461,7 +479,6 @@ public class LogicUnit : MonoBehaviour {
         gemST = UNSELECTED;
     }
 
-    // Conditions to swap
     public bool TwoSelected()
     {
         return gemSO != UNSELECTED && gemST != UNSELECTED;

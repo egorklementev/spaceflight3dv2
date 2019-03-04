@@ -12,8 +12,7 @@ public class InputUnit : MonoBehaviour {
 
     private bool isGameOver = false;
     
-    private void Start()
-    {}
+    private void Start() {}
     
     private void Update()
     {

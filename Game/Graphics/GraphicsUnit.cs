@@ -12,8 +12,8 @@ public class GraphicsUnit : MonoBehaviour {
     public GameObject[] gems; // Gems including bonuses
     public GameObject gemPart; // Part of the destroyed gem
     public GameObject meteorPrefab; // Meteor falling on the grid
-    public GameObject lightningBar; 
-    public GameObject lightningPrefab; 
+    public GameObject energyAnchor; 
+    public GameObject energyPrefab; 
     public ParticleSystem explosionPrefab;
     [Space(10)]
 
@@ -30,7 +30,7 @@ public class GraphicsUnit : MonoBehaviour {
     [HideInInspector]
     public int WorkingObjs { get; set; }
 
-    private GameObject[] lightnings;
+    private GameObject[] energyBar;
     private GameObject[,] grid;
 
     private int gSizeX;
@@ -50,10 +50,10 @@ public class GraphicsUnit : MonoBehaviour {
             0);
         transform.localScale *= 45f; // Magic number
 
-        lightnings = new GameObject[pu.maximumEnergy];
+        energyBar = new GameObject[pu.maximumEnergy];
         for (int i = 0; i < pu.maximumEnergy; i++) 
         {
-            AddSuboptimal(i);
+            AddEnergy(i);
         }
 
         colors = new Color[10];
@@ -236,27 +236,24 @@ public class GraphicsUnit : MonoBehaviour {
         // Load to result screen
     }
 
-    public void EnableSuboptimal(int i)
+    public void SwitchEnergy(int i)
     {
+        energyBar[i].GetComponent<Rotation>().enabled = !energyBar[i].GetComponent<Rotation>().enabled;
 
-    }
-
-    public void DisableSuboptimal(int i)
-    {
-        lightnings[i].GetComponent<Rotation>().enabled = false;
-
-        foreach (Transform child in lightnings[i].transform)
+        foreach (Transform child in energyBar[i].transform)
         {
-            child.gameObject.GetComponent<Renderer>().material.color /= 5f;
+            child.gameObject.GetComponent<Renderer>().material.color *= 
+                energyBar[i].GetComponent<Rotation>().enabled ? 5f : .2f;
         }
-    }
+    }    
 
-    private void AddSuboptimal(int i)
+    // Creates an instance to the anchor
+    private void AddEnergy(int i)
     {
-        lightnings[i] = Instantiate(lightningPrefab, lightningBar.transform);
-        lightnings[i].transform.localScale = new Vector3(1.5f * pu.gemSize, pu.gemSize, pu.gemSize);
-        lightnings[i].transform.Translate(
-            .75f * lightnings[i].transform.localScale.x * i, 0f, 0f
+        energyBar[i] = Instantiate(energyPrefab, energyAnchor.transform);
+        energyBar[i].transform.localScale = new Vector3(1.5f * pu.gemSize, pu.gemSize, pu.gemSize);
+        energyBar[i].transform.Translate(
+            .75f * energyBar[i].transform.localScale.x * i, 0f, 0f
             );
     }
 
