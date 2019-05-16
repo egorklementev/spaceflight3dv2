@@ -248,6 +248,22 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }    
 
+    public void RecreateGrid(int newGSizeX, int newGSizeY)
+    {
+        grid = new GameObject[newGSizeX, newGSizeY];
+    }
+
+    public void UpdateDataAfterLoading()
+    {
+        gSizeX = (int)pu.gridSize.x;
+        gSizeY = (int)pu.gridSize.y;
+        transform.position = new Vector3(0, transform.position.y, transform.position.z);
+        transform.Translate(
+            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
+            pu.gemSize / 2f,
+            0);        
+    }
+
     // Creates an instance to the anchor
     private void AddEnergy(int i)
     {

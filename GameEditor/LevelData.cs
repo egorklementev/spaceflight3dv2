@@ -1,4 +1,5 @@
-﻿
+﻿using UnityEngine;
+
 [System.Serializable]
 public class LevelData {
 
@@ -28,13 +29,14 @@ public class LevelData {
         gemColors = new int[gridSizeX * gridSizeY];
         gemBonuses = new int[gridSizeX * gridSizeY];
 
-        int i = 0;
-        foreach (Cell c in lu.grid)
+        for (int x = 0; x < gridSizeX; x++)
         {
-            gemColors[i] = c.Gem.Color;
-            gemBonuses[i] = c.Gem.Bonus;
-            i++;
-        }
+            for (int y = 0; y < gridSizeY; y++)
+            {
+                gemColors[x * gridSizeY + y] = lu.grid[x,y].Gem.Color;
+                gemBonuses[x * gridSizeY + y] = lu.grid[x,y].Gem.Bonus;
+            }
+        }    
 
         availableColors = pu.colorsAvailable;
         availableBonuses = new int[pu.permittedBonuses.Length];

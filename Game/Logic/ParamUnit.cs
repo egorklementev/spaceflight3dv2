@@ -67,14 +67,7 @@ public class ParamUnit : MonoBehaviour {
         }
         #endregion
 
-        // Size of the gems sides
-        float pixelsInUnit = Screen.height / 10f; // Size of the camera is 5
-        gemSize = Mathf.Min(
-            screenBound.x * Screen.width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
-            screenBound.y * Screen.height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)
-            );
-        gemSize /= pixelsInUnit;
-        gemOffset = gemOffsetParam * gemSize;
+        ComputeGemSizes();
 
         gu.gameObject.SetActive(true);
         lu.gameObject.SetActive(true);
@@ -105,11 +98,26 @@ public class ParamUnit : MonoBehaviour {
         return bonus;
     }
 
+    // Calculates offset and gem size to fit the screen properly
+    private void ComputeGemSizes()
+    {
+        // Size of the gems sides
+        float pixelsInUnit = Screen.height / 10f; // Size of the camera is 5
+        gemSize = Mathf.Min(
+            screenBound.x * Screen.width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
+            screenBound.y * Screen.height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)
+            );
+        gemSize /= pixelsInUnit;
+        gemOffset = gemOffsetParam * gemSize;
+    }
+
+    // Saves current state of the game in the persistent directory of the game
     public void SaveLevel()
     {
         SaveUnit.SaveLevel(this, lu);
     }
 
+    // Loads previously saved state of the game and replaces current one
     public void LoadLevel()
     {
         LevelData ld = SaveUnit.LoadLevel();
@@ -118,12 +126,39 @@ public class ParamUnit : MonoBehaviour {
         {
             for (int y = 0; y < gridSize.y; y++)
             {
-                gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                if (!lu.grid[x,y].IsEmpty())
+                {
+                    gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                }                
             }
         }
 
         gridSize.x = ld.gridSizeX;
         gridSize.y = ld.gridSizeY;
+
+        ComputeGemSizes();
+
+        gu.UpdateDataAfterLoading();
+        lu.UpdateDataAfterLoading();
+
+        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+
+        lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
+        for (int x = 0; x < (int)gridSize.x; x++)
+        {
+            for (int y = 0; y < (int)gridSize.y; y++)
+            {
+                lu.grid[x, y] = new Cell(new Vector2(x, y))
+                {
+                    Gem = new Gem
+                    {
+                        Color = ld.gemColors[x * (int)gridSize.y + y],
+                        Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
+                    }
+                };
+                gu.SpawnGem((int)lu.grid[x,y].Position.x, (int)lu.grid[x,y].Position.y, lu.grid[x,y].Gem.Color, lu.grid[x,y].Gem.Bonus);
+            }
+        }
 
         colorsAvailable = ld.availableColors;
         ld.availableBonuses.CopyTo(permittedBonuses, 0);
@@ -133,16 +168,6 @@ public class ParamUnit : MonoBehaviour {
 
         spawnNewGems = ld.spawnNewGems;
         randomizeColors = ld.randomizeColors;
-
-        int i = 0;
-        foreach (Cell c in lu.grid)
-        {
-            c.Gem.Color = ld.gemColors[i];
-            c.Gem.Bonus = ld.gemBonuses[i];
-            gu.SpawnGem((int)c.Position.x, (int)c.Position.y, c.Gem.Color, c.Gem.Bonus);
-            i++;
-        }
-
     }
 
 }
