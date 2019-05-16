@@ -26,6 +26,7 @@ public class GraphicsUnit : MonoBehaviour {
     public LogicUnit lu;
     public InputUnit iu;
     public ParamUnit pu;
+    public FadeManager fadeManager;
 
     [HideInInspector]
     public int WorkingObjs { get; set; }
@@ -233,7 +234,7 @@ public class GraphicsUnit : MonoBehaviour {
         {
             loseText.SetActive(true);
         }
-        // Load to result screen
+        fadeManager.FadeToLevel(1);
     }
 
     public void SwitchEnergy(int i)

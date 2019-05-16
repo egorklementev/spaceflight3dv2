@@ -20,11 +20,13 @@ public class ParamUnit : MonoBehaviour {
     public int sequenceSize = 3;
     public bool randomizeColors = false;
     public int maximumEnergy = 3;
+    public bool spawnNewGems = true;
     [Space(10)]
 
     [Header("Bonus params")]
-    [Range(0, 100)]
+    [Range(0, 25)]
     public int bonusesPercentage = 5;
+    [Range(0, 25)]
     public int energyPercentage = 5;
     public int[] permittedBonuses;
     public float meteorMoveSpeed = 1f;
@@ -87,7 +89,7 @@ public class ParamUnit : MonoBehaviour {
     // Bonus 2 - colorless
     // Bonus 3 - same color
     // Bonus 4 - obstacle
-    // Bonus 5 - energy
+    // Bonus 5 - energy - not to be included to permitted bonuses
     public int GetRandomBonus()
     {
         int bonus = -1;

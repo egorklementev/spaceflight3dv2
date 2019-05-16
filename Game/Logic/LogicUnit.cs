@@ -28,6 +28,8 @@ public class LogicUnit : MonoBehaviour {
     private bool needToCheck = false;
     private bool bonusIsWorking = false;
 
+    private bool initialSpawnHappened = false;
+
     private void Awake() {        
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
@@ -429,6 +431,14 @@ public class LogicUnit : MonoBehaviour {
             gu.SwitchEnergy(suboptimalMoves);
     }
 
+    public void SwapGems(Vector2 pos1, Vector2 pos2)
+    {
+        Gem temp = grid[(int)pos1.x, (int)pos1.y].Gem;
+        grid[(int)pos1.x, (int)pos1.y].Gem = grid[(int)pos2.x, (int)pos2.y].Gem;
+        grid[(int)pos2.x, (int)pos2.y].Gem = temp;
+        needToCheck = true;
+    }
+
     // Checks if it is valid to select the gem or not
     public bool IsGemValid(int x, int y)
     {
@@ -449,28 +459,51 @@ public class LogicUnit : MonoBehaviour {
     // Checks for empty cells and fill it with the random gems
     public void FillGemGrid()
     {
-        for (int x = 0; x < gSizeX; x++)
+        if (pu.spawnNewGems)
         {
-            for (int y = 0; y < gSizeY; y++)
+            initialSpawnHappened = true;
+            for (int x = 0; x < gSizeX; x++)
             {
-                if (grid[x, y].IsEmpty())
+                for (int y = 0; y < gSizeY; y++)
                 {
-                    needToCheck = true;
-                    grid[x, y].Gem = GetRandomGem();
-                    gu.SpawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    if (grid[x, y].IsEmpty())
+                    {
+                        needToCheck = true;
+                        grid[x, y].Gem = GetRandomGem();
+                        gu.SpawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    }
+                }
+            }
+        } else if (!initialSpawnHappened)
+        {
+            initialSpawnHappened = true;
+            for (int x = 0; x < gSizeX; x++)
+            {
+                for (int y = 0; y < gSizeY; y++)
+                {
+                    if (grid[x, y].IsEmpty())
+                    {
+                        needToCheck = true;
+                        grid[x, y].Gem = GetRandomGem();
+                        gu.SpawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    }
                 }
             }
         }
     }
     
-    //
-    public void SwapGems(Vector2 pos1, Vector2 pos2)
+    // Fills the grid with the given grid preset
+    public void FillGemGrid(Cell[,] givenGrid)
     {
-        Gem temp = grid[(int)pos1.x, (int)pos1.y].Gem;
-        grid[(int)pos1.x, (int)pos1.y].Gem = grid[(int)pos2.x, (int)pos2.y].Gem;
-        grid[(int)pos2.x, (int)pos2.y].Gem = temp;
-        needToCheck = true;
-    }
+        for (int x = 0; x < gSizeX; x++)
+        {
+            for (int y = 0; y < gSizeY; y++)
+            {
+                grid[x, y].Gem = givenGrid[x, y].Gem;
+                gu.SpawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);           
+            }
+        }
+    }    
 
     // If less than two gems were selected
     public void ResetSelection()
