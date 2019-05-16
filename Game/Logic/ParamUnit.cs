@@ -105,4 +105,44 @@ public class ParamUnit : MonoBehaviour {
         return bonus;
     }
 
+    public void SaveLevel()
+    {
+        SaveUnit.SaveLevel(this, lu);
+    }
+
+    public void LoadLevel()
+    {
+        LevelData ld = SaveUnit.LoadLevel();
+
+        for (int x = 0; x < gridSize.x; x++)
+        {
+            for (int y = 0; y < gridSize.y; y++)
+            {
+                gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+            }
+        }
+
+        gridSize.x = ld.gridSizeX;
+        gridSize.y = ld.gridSizeY;
+
+        colorsAvailable = ld.availableColors;
+        ld.availableBonuses.CopyTo(permittedBonuses, 0);
+
+        sequenceSize = ld.sequenceSize;
+        maximumEnergy = ld.maximumEnergy;
+
+        spawnNewGems = ld.spawnNewGems;
+        randomizeColors = ld.randomizeColors;
+
+        int i = 0;
+        foreach (Cell c in lu.grid)
+        {
+            c.Gem.Color = ld.gemColors[i];
+            c.Gem.Bonus = ld.gemBonuses[i];
+            gu.SpawnGem((int)c.Position.x, (int)c.Position.y, c.Gem.Color, c.Gem.Bonus);
+            i++;
+        }
+
+    }
+
 }

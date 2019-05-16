@@ -1,23 +1,24 @@
 ﻿
+[System.Serializable]
 public class LevelData {
 
-    int gridSizeX;
-    int gridSizeY;
+    public int gridSizeX;
+    public int gridSizeY;
 
-    int[] gemColors;
-    int[] gemBonuses;
+    public int[] gemColors;
+    public int[] gemBonuses;
 
-    int availableColors;
-    int[] availableBonuses;
+    public int availableColors;
+    public int[] availableBonuses;
 
-    int sequenceSize;
-    int maximumEnergy;
+    public int sequenceSize;
+    public int maximumEnergy;
 
-    bool spawnNewGems;
-    bool randomizeColors;
+    public bool spawnNewGems;
+    public bool randomizeColors;
 
-    int bonusPercentage;
-    int energyPercentage;
+    public int bonusPercentage;
+    public int energyPercentage;
 
     public LevelData(ParamUnit pu, LogicUnit lu)
     {
