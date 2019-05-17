@@ -18,7 +18,7 @@ public class LogicUnit : MonoBehaviour {
     [HideInInspector]
     public bool readyToSwap = false;
     [HideInInspector]
-    public int suboptimalMoves = 3;
+    public int suboptimalMoves;
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
@@ -33,6 +33,8 @@ public class LogicUnit : MonoBehaviour {
     private void Awake() {        
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
+
+        suboptimalMoves = pu.maximumEnergy;
 
         grid = new Cell[gSizeX, gSizeY];    
         for (int x = 0; x < gSizeX; x++)
@@ -126,6 +128,7 @@ public class LogicUnit : MonoBehaviour {
                     break;
             }            
         }
+        needToCheck = true;
         grid[x, y].Gem = null;
     }
 
@@ -509,6 +512,7 @@ public class LogicUnit : MonoBehaviour {
     {
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
+        suboptimalMoves = pu.maximumEnergy;
     }
 
     // If less than two gems were selected
