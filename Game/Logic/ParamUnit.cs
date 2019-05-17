@@ -148,15 +148,22 @@ public class ParamUnit : MonoBehaviour {
         {
             for (int y = 0; y < (int)gridSize.y; y++)
             {
-                lu.grid[x, y] = new Cell(new Vector2(x, y))
+                if (ld.gemColors[x * (int)gridSize.y + y] != -1)
                 {
-                    Gem = new Gem
+                    lu.grid[x, y] = new Cell(new Vector2(x, y))
                     {
-                        Color = ld.gemColors[x * (int)gridSize.y + y],
-                        Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
-                    }
-                };
-                gu.SpawnGem((int)lu.grid[x,y].Position.x, (int)lu.grid[x,y].Position.y, lu.grid[x,y].Gem.Color, lu.grid[x,y].Gem.Bonus);
+                        Gem = new Gem
+                        {
+                            Color = ld.gemColors[x * (int)gridSize.y + y],
+                            Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
+                        }
+                    };
+                    gu.SpawnGem((int)lu.grid[x, y].Position.x, (int)lu.grid[x, y].Position.y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
+                } else
+                {
+                    lu.grid[x, y] = new Cell(new Vector2(x, y));
+                    lu.grid[x, y].SetEmpty();
+                }                
             }
         }
 

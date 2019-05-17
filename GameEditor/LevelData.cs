@@ -33,8 +33,14 @@ public class LevelData {
         {
             for (int y = 0; y < gridSizeY; y++)
             {
-                gemColors[x * gridSizeY + y] = lu.grid[x,y].Gem.Color;
-                gemBonuses[x * gridSizeY + y] = lu.grid[x,y].Gem.Bonus;
+                if (!lu.grid[x,y].IsEmpty())
+                {
+                    gemColors[x * gridSizeY + y] = lu.grid[x, y].Gem.Color;
+                    gemBonuses[x * gridSizeY + y] = lu.grid[x, y].Gem.Bonus;
+                } else
+                {
+                    gemColors[x * gridSizeY + y] = -1;
+                }             
             }
         }    
 

@@ -8,6 +8,7 @@ public static class SaveUnit {
     {
         BinaryFormatter bf = new BinaryFormatter();
         string path = Application.persistentDataPath + "/savedLevel.edf";
+
         FileStream fs = new FileStream(path, FileMode.Create);
 
         LevelData ld = new LevelData(pu, lu);

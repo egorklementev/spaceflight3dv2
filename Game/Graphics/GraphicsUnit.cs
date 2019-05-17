@@ -37,6 +37,8 @@ public class GraphicsUnit : MonoBehaviour {
     private int gSizeX;
     private int gSizeY;
 
+    private Vector3 initialPos;
+
     private Color[] colors;
 
     private void Awake()
@@ -45,6 +47,7 @@ public class GraphicsUnit : MonoBehaviour {
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
         grid = new GameObject[gSizeX, gSizeY];
+        initialPos = transform.position;
         transform.Translate(
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
             pu.gemSize / 2f,
@@ -257,7 +260,7 @@ public class GraphicsUnit : MonoBehaviour {
     {
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
-        transform.position = new Vector3(0, transform.position.y, transform.position.z);
+        transform.position = initialPos;
         transform.Translate(
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
             pu.gemSize / 2f,
