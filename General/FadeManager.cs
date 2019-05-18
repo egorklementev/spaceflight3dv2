@@ -9,6 +9,11 @@ public class FadeManager : MonoBehaviour {
         GetComponent<Animator>().SetTrigger("FadeTrigger");
     }
 
+    public void SwitchFade()
+    {
+        GetComponent<Animator>().SetBool("IsFaded", !GetComponent<Animator>().GetBool("IsFaded"));
+    }
+
     public void OnFadeComplete()
     {        
         SceneManager.LoadScene(0); // Loading screen        
