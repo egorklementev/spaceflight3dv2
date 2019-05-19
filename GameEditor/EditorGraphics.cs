@@ -13,9 +13,9 @@ public class EditorGraphics : MonoBehaviour
     [Space(10)]
 
     [Header("Units' refs")]
-    public LogicUnit lu;
-    public InputUnit iu;
-    public ParamUnit pu;
+    public EditorLogic lu;
+    public EditorInput iu;
+    public EditorParams pu;
     public FadeManager fadeManager;
     
     private GameObject[,] grid;
@@ -65,6 +65,10 @@ public class EditorGraphics : MonoBehaviour
 
         grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus], transform);
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
+        if (grid[x, y].GetComponent<Scale>() != null)
+        {
+            grid[x, y].GetComponent<Scale>().SetLocalScale(new Vector3(pu.gemSize, pu.gemSize, pu.gemSize));
+        }
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
         grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];
@@ -79,59 +83,7 @@ public class EditorGraphics : MonoBehaviour
     // Operates with the selection of the gems
     public void SelectGem(GameObject gem)
     {
-        // Search for gem inside grid array
-        for (int x = 0; x < gSizeX; x++)
-        {
-            for (int y = 0; y < gSizeY; y++)
-            {
-                if (gem.Equals(grid[x, y]))
-                {
-                    if (lu.IsGemValid(x, y))
-                    {
-                        if (lu.NoOneSelected())
-                        {
-                            lu.gemSO = new Vector2(x, y);
-
-                            Vector3 bigScale = new Vector3(pu.gemSize * 1.25f, pu.gemSize * 1.25f, pu.gemSize * 1.25f);
-                            StartCoroutine(ScaleGem(gem, bigScale, pu.gemScaleSpeed));
-                        }
-                        else if (lu.OneSelected())
-                        {
-                            lu.gemST = new Vector2(x, y);
-
-                            Vector3 bigScale = new Vector3(pu.gemSize * 1.25f, pu.gemSize * 1.25f, pu.gemSize * 1.25f);
-                            StartCoroutine(ScaleGem(gem, bigScale, pu.gemScaleSpeed));
-                        }
-                        else if (lu.TwoSelected())
-                        {
-                            if ((int)lu.gemSO.x == x && (int)lu.gemSO.y == y)
-                            {
-                                Vector3 normalScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
-                                StartCoroutine(ScaleGem(grid[(int)lu.gemST.x, (int)lu.gemST.y], normalScale, pu.gemScaleSpeed));
-
-                                lu.gemST = new Vector2(-1, -1);
-                            }
-                            else
-                            {
-                                Vector3 bigScale = new Vector3(pu.gemSize * 1.25f, pu.gemSize * 1.25f, pu.gemSize * 1.25f);
-                                StartCoroutine(ScaleGem(gem, bigScale, pu.gemScaleSpeed));
-
-                                Vector3 normalScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
-                                StartCoroutine(ScaleGem(grid[(int)lu.gemST.x, (int)lu.gemST.y], normalScale, pu.gemScaleSpeed));
-
-                                lu.gemST = new Vector2(x, y);
-                            }
-                        }
-                        else
-                        {
-                            float side = gem.transform.localScale.x;
-                            Vector3 scale = new Vector3(side * 1.25f, side * 1.25f, side * 1.25f);
-                            StartCoroutine(ScaleGem(gem, scale, pu.gemScaleSpeed));
-                        }
-                    }
-                }
-            }
-        }
+        
     }
 
     // If less than two gems were selected
@@ -186,14 +138,12 @@ public class EditorGraphics : MonoBehaviour
     // Scales given gem to some scale
     private IEnumerator ScaleGem(GameObject gem, Vector3 finalScale, float speed)
     {
-        //WorkingObjs++;
         Vector3 currentScale = gem.transform.localScale;
         for (float t = 0; t < 1f; t += Time.deltaTime * speed)
         {
             gem.transform.localScale = Vector3.Lerp(currentScale, finalScale, t);
             yield return new WaitForEndOfFrame();
         }
-        //WorkingObjs--;
     }
 
     // Returns graphical position given x and y on the grid

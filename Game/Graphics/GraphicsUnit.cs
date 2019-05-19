@@ -86,6 +86,10 @@ public class GraphicsUnit : MonoBehaviour {
       
         grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus], transform);
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
+        if (grid[x, y].GetComponent<Scale>() != null)
+        {
+            grid[x, y].GetComponent<Scale>().SetLocalScale(new Vector3(pu.gemSize, pu.gemSize, pu.gemSize));
+        }
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
         grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];        
