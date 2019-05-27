@@ -42,7 +42,10 @@ public class EditorParams : MonoBehaviour
     [HideInInspector]
     public float gemSize;
 
-    private int[] colorVector;
+    public const int slotNumber = 8;
+    public static int currentSlot = 1;
+
+    private int[] colorVector;    
 
     public void InitializeOnStart()
     {
@@ -66,7 +69,7 @@ public class EditorParams : MonoBehaviour
                 colorVector[i] = i;
             }
         }
-        #endregion
+        #endregion        
 
         ComputeGemSizes();        
 
@@ -115,75 +118,80 @@ public class EditorParams : MonoBehaviour
     // Saves current state of the game in the persistent directory of the game
     public void SaveLevel()
     {
-        //SaveUnit.SaveLevel(this, lu);
+        SaveUnit.SaveLevel(this, lu, currentSlot);
     }
 
     // Loads previously saved state of the game and replaces current one
     public void LoadLevel()
     {
-        LevelData ld = SaveUnit.LoadLevel();
+        LevelData ld = SaveUnit.LoadLevel(currentSlot);
 
-        for (int x = 0; x < gridSize.x; x++)
+        if (ld == null)
         {
-            for (int y = 0; y < gridSize.y; y++)
-            {
-                if (!lu.grid[x, y].IsEmpty())
-                {
-                    //gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
-                }
-            }
-        }
-
-        gridSize.x = ld.gridSizeX;
-        gridSize.y = ld.gridSizeY;
-
-        ComputeGemSizes();
-
-        gu.UpdateDataAfterLoading();
-        lu.UpdateDataAfterLoading();
-
-        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
-
-        lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
-        for (int x = 0; x < (int)gridSize.x; x++)
+            SaveLevel();
+        } else
         {
-            for (int y = 0; y < (int)gridSize.y; y++)
+            for (int x = 0; x < gridSize.x; x++)
             {
-                if (ld.gemColors[x * (int)gridSize.y + y] != -1)
+                for (int y = 0; y < gridSize.y; y++)
                 {
-                    lu.grid[x, y] = new Cell(new Vector2(x, y))
+                    if (!lu.grid[x, y].IsEmpty())
                     {
-                        Gem = new Gem
-                        {
-                            Color = ld.gemColors[x * (int)gridSize.y + y],
-                            Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
-                        }
-                    };
-                    gu.SpawnGem((int)lu.grid[x, y].Position.x, (int)lu.grid[x, y].Position.y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
-                }
-                else
-                {
-                    lu.grid[x, y] = new Cell(new Vector2(x, y));
-                    lu.grid[x, y].SetEmpty();
+                        gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                    }
                 }
             }
-        }
 
-        colorsAvailable = ld.availableColors;
-        ld.availableBonuses.CopyTo(permittedBonuses, 0);
+            gridSize.x = ld.gridSizeX;
+            gridSize.y = ld.gridSizeY;
 
-        sequenceSize = ld.sequenceSize;
-        maximumEnergy = ld.maximumEnergy;
+            ComputeGemSizes();
 
-        spawnNewGems = ld.spawnNewGems;
-        randomizeColors = ld.randomizeColors;
+            gu.UpdateDataAfterLoading();
+            lu.UpdateDataAfterLoading();
+
+            gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+
+            lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
+            for (int x = 0; x < (int)gridSize.x; x++)
+            {
+                for (int y = 0; y < (int)gridSize.y; y++)
+                {
+                    if (ld.gemColors[x * (int)gridSize.y + y] != -1)
+                    {
+                        lu.grid[x, y] = new Cell(new Vector2(x, y))
+                        {
+                            Gem = new Gem
+                            {
+                                Color = ld.gemColors[x * (int)gridSize.y + y],
+                                Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
+                            }
+                        };
+                        gu.SpawnGem((int)lu.grid[x, y].Position.x, (int)lu.grid[x, y].Position.y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
+                    }
+                    else
+                    {
+                        lu.grid[x, y] = new Cell(new Vector2(x, y));
+                        lu.grid[x, y].SetEmpty();
+                    }
+                }
+            }
+
+            colorsAvailable = ld.availableColors;
+            ld.availableBonuses.CopyTo(permittedBonuses, 0);
+
+            sequenceSize = ld.sequenceSize;
+            maximumEnergy = ld.maximumEnergy;
+
+            spawnNewGems = ld.spawnNewGems;
+            randomizeColors = ld.randomizeColors;
+        }        
     }
 
     public void IncreaseGridSizeX()
     {
         gridSize.x += 1f;
     }
-
     public void DecreaseGridSizeX()
     {   
         if (gridSize.x > 1f)
@@ -194,7 +202,6 @@ public class EditorParams : MonoBehaviour
     {
         gridSize.y += 1f;
     }
-
     public void DecreaseGridSizeY()
     {
         if (gridSize.y > 1f)
@@ -206,7 +213,6 @@ public class EditorParams : MonoBehaviour
         if (colorsAvailable < 8)
             colorsAvailable++;
     }
-
     public void DecreaseAvailableColors()
     {
         if (colorsAvailable > 3)
@@ -218,11 +224,43 @@ public class EditorParams : MonoBehaviour
         if (sequenceSize < Mathf.Min(gridSize.x, gridSize.y))
             sequenceSize++;
     }
-
     public void DecreaseSequenceSize()
     {
         if (sequenceSize > 3)
             sequenceSize--;
+    }
+
+    public void IncreaseBonusChance()
+    {
+        if (bonusesPercentage < 25)       
+            bonusesPercentage++;        
+    }
+    public void DecreaseBonusChance()
+    {
+        if (bonusesPercentage > 0)
+            bonusesPercentage--;
+    }
+
+    public void IncreaseEnergyChance()
+    {
+        if (energyPercentage < 25)
+            energyPercentage++;
+    }
+    public void DecreaseEnergyChance()
+    {
+        if (energyPercentage > 0)
+            energyPercentage--;
+    }
+
+    public void IncreaseSlot()
+    {
+        if (currentSlot < slotNumber)
+            currentSlot++;
+    }
+    public void DecreaseSlot()
+    {
+        if (currentSlot > 1)
+            currentSlot--;
     }
 
 }

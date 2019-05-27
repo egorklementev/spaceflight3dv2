@@ -21,7 +21,7 @@ public class LevelData {
     public int bonusPercentage;
     public int energyPercentage;
 
-    public LevelData(ParamUnit pu, LogicUnit lu)
+    public LevelData(EditorParams pu, EditorLogic lu)
     {
         gridSizeX = (int) pu.gridSize.x;
         gridSizeY = (int) pu.gridSize.y;

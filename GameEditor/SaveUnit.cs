@@ -4,12 +4,12 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 public static class SaveUnit {
 
-    public static void SaveLevel(ParamUnit pu, LogicUnit lu)
+    public static void SaveLevel(EditorParams pu, EditorLogic lu, int slotNumber)
     {
         BinaryFormatter bf = new BinaryFormatter();
-        string path = Application.persistentDataPath + "/savedLevel.edf";
+        string path = Application.persistentDataPath + "/savedLevel" + slotNumber.ToString() + ".edf";
 
-        FileStream fs = new FileStream(path, FileMode.Create);
+        FileStream fs = new FileStream(path, FileMode.OpenOrCreate);
 
         LevelData ld = new LevelData(pu, lu);
 
@@ -17,9 +17,9 @@ public static class SaveUnit {
         fs.Close();
     }
 
-    public static LevelData LoadLevel()
+    public static LevelData LoadLevel(int slotNumber)
     {
-        string path = Application.persistentDataPath + "/savedLevel.edf";
+        string path = Application.persistentDataPath + "/savedLevel" + slotNumber.ToString() + ".edf";
         if (File.Exists(path))
         {
             BinaryFormatter bf = new BinaryFormatter();

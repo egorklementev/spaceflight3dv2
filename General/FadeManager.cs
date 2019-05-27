@@ -19,5 +19,4 @@ public class FadeManager : MonoBehaviour {
         SceneManager.LoadScene(0); // Loading screen        
     }
     
-    
 }

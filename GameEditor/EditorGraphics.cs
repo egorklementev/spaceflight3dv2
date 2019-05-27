@@ -80,6 +80,12 @@ public class EditorGraphics : MonoBehaviour
         StartCoroutine(MoveGem(grid[x, y], x, y));
     }
 
+    public void DestroyGem(int x, int y, int color)
+    {
+        Destroy(grid[x, y]);
+        grid[x, y] = null;        
+    }
+
     // Operates with the selection of the gems
     public void SelectGem(GameObject gem)
     {
