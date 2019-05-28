@@ -76,20 +76,94 @@ public class EditorGraphics : MonoBehaviour
         {
             grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[8];
         }
+        if (bonus == 4)
+        {
+            grid[x, y].tag = "Unbreakable";
+        }
 
         StartCoroutine(MoveGem(grid[x, y], x, y));
     }
 
     public void DestroyGem(int x, int y, int color)
     {
+
         Destroy(grid[x, y]);
         grid[x, y] = null;        
+    }
+
+    public void SwapGems(Vector2 pos1, Vector2 pos2)
+    {
+        // * In case we perform swap with empty cell
+        if (grid[(int)pos1.x, (int)pos1.y] != null) // *
+        {
+            StartCoroutine(MoveGem(grid[(int)pos1.x, (int)pos1.y], (int)pos2.x, (int)pos2.y));
+        }
+        if (grid[(int)pos2.x, (int)pos2.y] != null) // *
+        {
+            StartCoroutine(MoveGem(grid[(int)pos2.x, (int)pos2.y], (int)pos1.x, (int)pos1.y));
+        }
+
+        GameObject temp = grid[(int)pos1.x, (int)pos1.y];
+        grid[(int)pos1.x, (int)pos1.y] = grid[(int)pos2.x, (int)pos2.y];
+        grid[(int)pos2.x, (int)pos2.y] = temp;
     }
 
     // Operates with the selection of the gems
     public void SelectGem(GameObject gem)
     {
-        
+        // Search for gem inside grid array
+        for (int x = 0; x < gSizeX; x++)
+        {
+            for (int y = 0; y < gSizeY; y++)
+            {
+                if (gem.Equals(grid[x, y]))
+                {
+                    if (lu.IsGemValid(x, y))
+                    { 
+                        if (lu.NoOneSelected())
+                        {
+                            lu.gemSO = new Vector2(x, y);
+
+                            Vector3 bigScale = new Vector3(pu.gemSize * 1.25f, pu.gemSize * 1.25f, pu.gemSize * 1.25f);
+                            StartCoroutine(ScaleGem(gem, bigScale, pu.gemScaleSpeed));
+                        }
+                        else if (lu.OneSelected())
+                        {
+                            lu.gemST = new Vector2(x, y);
+
+                            Vector3 bigScale = new Vector3(pu.gemSize * 1.25f, pu.gemSize * 1.25f, pu.gemSize * 1.25f);
+                            StartCoroutine(ScaleGem(gem, bigScale, pu.gemScaleSpeed));
+                        }
+                        else if (lu.TwoSelected())
+                        {
+                            if ((int)lu.gemSO.x == x && (int)lu.gemSO.y == y)
+                            {
+                                Vector3 normalScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
+                                StartCoroutine(ScaleGem(grid[(int)lu.gemST.x, (int)lu.gemST.y], normalScale, pu.gemScaleSpeed));
+
+                                lu.gemST = new Vector2(-1, -1);
+                            }
+                            else
+                            {
+                                Vector3 bigScale = new Vector3(pu.gemSize * 1.25f, pu.gemSize * 1.25f, pu.gemSize * 1.25f);
+                                StartCoroutine(ScaleGem(gem, bigScale, pu.gemScaleSpeed));
+
+                                Vector3 normalScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
+                                StartCoroutine(ScaleGem(grid[(int)lu.gemST.x, (int)lu.gemST.y], normalScale, pu.gemScaleSpeed));
+
+                                lu.gemST = new Vector2(x, y);
+                            }
+                        }
+                        else
+                        {
+                            float side = gem.transform.localScale.x;
+                            Vector3 scale = new Vector3(side * 1.25f, side * 1.25f, side * 1.25f);
+                            StartCoroutine(ScaleGem(gem, scale, pu.gemScaleSpeed));
+                        }                   
+                    }
+                }
+            }
+        }
     }
 
     // If less than two gems were selected

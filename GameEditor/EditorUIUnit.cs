@@ -6,6 +6,7 @@ public class EditorUIUnit : MonoBehaviour {
 
     public TextMeshProUGUI fpsText;
     public TextMeshProUGUI slotText;
+    [Space(10)]
 
     public TextMeshProUGUI xSizeText;
     public TextMeshProUGUI ySizeText;
@@ -13,20 +14,27 @@ public class EditorUIUnit : MonoBehaviour {
     public TextMeshProUGUI sequenceSizeText;
     public TextMeshProUGUI bonusChanceText;
     public TextMeshProUGUI energyChanceText;
+    [Space(10)]
 
     public TextMeshProUGUI randomizeColors;
     public TextMeshProUGUI spawnNewGems;
+    [Space(10)]
 
     // Loading options
     public TextMeshProUGUI levelToLoadText;
+    public TextMeshProUGUI levelToSaveText;
+    [Space(10)]
 
     public Button incrBonus;
     public Button decrBonus;
     public Button incrEnergy;
     public Button decrEnergy;
+    [Space(10)]
 
     public GameObject preOptionsGroup;
     public FadeSwitcher loadingGroup;
+    public FadeSwitcher saveGroup;
+    [Space(10)]
 
     public EditorParams pu;
 
@@ -58,8 +66,11 @@ public class EditorUIUnit : MonoBehaviour {
             decrEnergy.interactable = false;
         }
 
-        loadingGroup.SwitchFade();
+        //saveGroup.SwitchFade();
+        //loadingGroup.SwitchFade();
+
         levelToLoadText.text = EditorParams.currentSlot.ToString();
+        levelToSaveText.text = EditorParams.currentSlot.ToString();
     }
 
     void Update () {
@@ -75,6 +86,7 @@ public class EditorUIUnit : MonoBehaviour {
         energyChanceText.text = "Energy chance: " + pu.energyPercentage.ToString();
 
         levelToLoadText.text = EditorParams.currentSlot.ToString();
+        levelToSaveText.text = EditorParams.currentSlot.ToString();
     }
 
     public void SwitchColorRandomization()
@@ -115,4 +127,21 @@ public class EditorUIUnit : MonoBehaviour {
         preOptionsGroup.SetActive(false);
     }
 
+    public void HideLoadingOptions()
+    {
+        loadingGroup.gameObject.SetActive(false);
+    }
+    public void ShowLoadingOptions()
+    {
+        loadingGroup.gameObject.SetActive(true);
+    }
+
+    public void HideSaveOptions()
+    {
+        saveGroup.gameObject.SetActive(false);
+    }
+    public void ShowSaveOptions()
+    {
+        saveGroup.gameObject.SetActive(true);
+    }
 }

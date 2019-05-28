@@ -29,8 +29,6 @@ public class EditorParams : MonoBehaviour
     [Range(0, 25)]
     public int energyPercentage = 5;
     public int[] permittedBonuses;
-    public float meteorMoveSpeed = 1f;
-    public float meteorOffset = 10f;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -115,13 +113,15 @@ public class EditorParams : MonoBehaviour
         gemOffset = gemOffsetParam * gemSize;
     }
 
-    // Saves current state of the game in the persistent directory of the game
+    // Saves current state of the game in the persistent directory of the game. 
+    // Uses 'currentSlot' variable to identify the file in which to save
     public void SaveLevel()
     {
         SaveUnit.SaveLevel(this, lu, currentSlot);
     }
 
     // Loads previously saved state of the game and replaces current one
+    // Uses 'currentSlot' variable to identify the file from which to load
     public void LoadLevel()
     {
         LevelData ld = SaveUnit.LoadLevel(currentSlot);
@@ -186,6 +186,12 @@ public class EditorParams : MonoBehaviour
             spawnNewGems = ld.spawnNewGems;
             randomizeColors = ld.randomizeColors;
         }        
+    }
+
+    // Tells ParamsUnit to load level containing in 'currentSlot' variable
+    public void SetLevelToLoad()
+    {
+        ParamUnit.slotToLoad = currentSlot;
     }
 
     public void IncreaseGridSizeX()
@@ -262,5 +268,5 @@ public class EditorParams : MonoBehaviour
         if (currentSlot > 1)
             currentSlot--;
     }
-
+    
 }

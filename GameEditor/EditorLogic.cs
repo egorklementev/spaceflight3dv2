@@ -22,10 +22,7 @@ public class EditorLogic : MonoBehaviour
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
     private int gSizeX;
-    private int gSizeY;
-
-    private bool needToCheck = false;
-    private bool bonusIsWorking = false;    
+    private int gSizeY;  
 
     private void Awake()
     {
@@ -79,6 +76,13 @@ public class EditorLogic : MonoBehaviour
         return gem;
     }
 
+    public void SwapGems(Vector2 pos1, Vector2 pos2)
+    {
+        Gem temp = grid[(int)pos1.x, (int)pos1.y].Gem;
+        grid[(int)pos1.x, (int)pos1.y].Gem = grid[(int)pos2.x, (int)pos2.y].Gem;
+        grid[(int)pos2.x, (int)pos2.y].Gem = temp;
+    }
+
     public void DestroyGem(int x, int y)
     {        
         grid[x, y].Gem = null;
@@ -110,10 +114,46 @@ public class EditorLogic : MonoBehaviour
         }
     }
 
+    // Checks if it is valid to select the gem or not
+    public bool IsGemValid(int x, int y)
+    {
+        if (gemSO == UNSELECTED)
+        {
+            return true;
+        }
+        else
+        {            
+            return !((int)gemSO.x == x && (int)gemSO.y == y) && !((int)gemST.x == x && (int)gemST.y == y) ||
+                (TwoSelected() && (int)gemSO.x == x && (int)gemSO.y == y);
+        }
+    }
+
     public void UpdateDataAfterLoading()
     {
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
+    }
+
+    // If less than two gems were selected
+    public void ResetSelection()
+    {
+        gemSO = UNSELECTED;
+        gemST = UNSELECTED;
+    }
+
+    public bool TwoSelected()
+    {
+        return gemSO != UNSELECTED && gemST != UNSELECTED;
+    }
+
+    public bool OneSelected()
+    {
+        return gemSO != UNSELECTED && gemST == UNSELECTED;
+    }
+
+    public bool NoOneSelected()
+    {
+        return gemSO == UNSELECTED && gemST == UNSELECTED;
     }
 
 }

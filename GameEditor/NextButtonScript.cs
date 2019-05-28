@@ -7,5 +7,7 @@ public class NextButtonScript : MonoBehaviour {
     public void DisablePreOptions()
     {
         ui.HidePreOptions();
+        ui.HideLoadingOptions();
+        ui.HideSaveOptions();
     }
 }

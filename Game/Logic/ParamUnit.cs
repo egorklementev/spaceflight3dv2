@@ -42,6 +42,8 @@ public class ParamUnit : MonoBehaviour {
     [HideInInspector]
     public float gemSize;
 
+    public static int slotToLoad = -1;
+
     private int[] colorVector;
 
     private void Start()
@@ -66,11 +68,16 @@ public class ParamUnit : MonoBehaviour {
             }
         }
         #endregion
-
+        
         ComputeGemSizes();
 
         gu.gameObject.SetActive(true);
         lu.gameObject.SetActive(true);
+
+        if (slotToLoad != -1)
+        {
+            LoadLevel();     
+        }
     }
         
     public int GetRandomColor()
@@ -111,4 +118,68 @@ public class ParamUnit : MonoBehaviour {
         gemOffset = gemOffsetParam * gemSize;
     }
     
+    // Loads previously saved state of the game and replaces current one
+    // Uses 'currentSlot' variable to identify the file from which to load
+    public void LoadLevel()
+    {
+        LevelData ld = SaveUnit.LoadLevel(slotToLoad);
+        
+        for (int x = 0; x < gridSize.x; x++)
+        {
+            for (int y = 0; y < gridSize.y; y++)
+            {
+                if (!lu.grid[x, y].IsEmpty())
+                {
+                    gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                }
+            }
+        }
+
+        gridSize.x = ld.gridSizeX;
+        gridSize.y = ld.gridSizeY;
+
+        ComputeGemSizes();
+
+        gu.UpdateDataAfterLoading();
+        lu.UpdateDataAfterLoading();
+
+        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+
+        lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
+        for (int x = 0; x < (int)gridSize.x; x++)
+        {
+            for (int y = 0; y < (int)gridSize.y; y++)
+            {
+                if (ld.gemColors[x * (int)gridSize.y + y] != -1)
+                {
+                    lu.grid[x, y] = new Cell(new Vector2(x, y))
+                    {
+                        Gem = new Gem
+                        {
+                            Color = ld.gemColors[x * (int)gridSize.y + y],
+                            Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
+                        }
+                    };
+                    gu.SpawnGem((int)lu.grid[x, y].Position.x, (int)lu.grid[x, y].Position.y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
+                }
+                else
+                {
+                    lu.grid[x, y] = new Cell(new Vector2(x, y));
+                    lu.grid[x, y].SetEmpty();
+                }
+            }
+        }
+
+        colorsAvailable = ld.availableColors;
+        ld.availableBonuses.CopyTo(permittedBonuses, 0);
+
+        sequenceSize = ld.sequenceSize;
+        maximumEnergy = ld.maximumEnergy;
+
+        spawnNewGems = ld.spawnNewGems;
+        randomizeColors = ld.randomizeColors;
+
+        slotToLoad = -1;
+    }
+
 }
