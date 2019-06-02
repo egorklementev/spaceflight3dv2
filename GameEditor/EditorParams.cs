@@ -39,11 +39,11 @@ public class EditorParams : MonoBehaviour
     public float gemOffset;
     [HideInInspector]
     public float gemSize;
+    [HideInInspector]
+    public int[] colorVector;    
 
     public const int slotNumber = 8;
     public static int currentSlot = 1;
-
-    private int[] colorVector;    
 
     public void InitializeOnStart()
     {
@@ -111,6 +111,7 @@ public class EditorParams : MonoBehaviour
             );
         gemSize /= pixelsInUnit;
         gemOffset = gemOffsetParam * gemSize;
+        
     }
 
     // Saves current state of the game in the persistent directory of the game. 
@@ -141,6 +142,37 @@ public class EditorParams : MonoBehaviour
                     }
                 }
             }
+
+            colorsAvailable = ld.availableColors;
+            ld.availableBonuses.CopyTo(permittedBonuses, 0);
+
+            sequenceSize = ld.sequenceSize;
+            maximumEnergy = ld.maximumEnergy;
+
+            spawnNewGems = ld.spawnNewGems;
+            randomizeColors = ld.randomizeColors;
+
+            #region Color vector for gem colors
+            if (randomizeColors)
+            {
+                colorVector = new int[colorsAvailable];
+                List<int> list = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
+                for (int i = 0; i < colorsAvailable; i++)
+                {
+                    int index = Random.Range(0, list.Count);
+                    colorVector[i] = list[index];
+                    list.RemoveAt(index);
+                }
+            }
+            else
+            {
+                colorVector = new int[colorsAvailable];
+                for (int i = 0; i < colorsAvailable; i++)
+                {
+                    colorVector[i] = i;
+                }
+            }
+            #endregion
 
             gridSize.x = ld.gridSizeX;
             gridSize.y = ld.gridSizeY;
@@ -176,15 +208,6 @@ public class EditorParams : MonoBehaviour
                     }
                 }
             }
-
-            colorsAvailable = ld.availableColors;
-            ld.availableBonuses.CopyTo(permittedBonuses, 0);
-
-            sequenceSize = ld.sequenceSize;
-            maximumEnergy = ld.maximumEnergy;
-
-            spawnNewGems = ld.spawnNewGems;
-            randomizeColors = ld.randomizeColors;
         }        
     }
 

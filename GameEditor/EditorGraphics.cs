@@ -12,6 +12,11 @@ public class EditorGraphics : MonoBehaviour
     public GameObject[] gems; // Gems including bonuses
     [Space(10)]
 
+    [Header("Color selection panel")]
+    public GameObject colorSelectionGroup;
+    public ColorSelection colorSelector;
+    [Space(10)]
+
     [Header("Units' refs")]
     public EditorLogic lu;
     public EditorInput iu;
@@ -24,21 +29,12 @@ public class EditorGraphics : MonoBehaviour
     private int gSizeY;
 
     private Vector3 initialPos;
+    private Vector3 initialColorPanelPos;
 
-    private Color[] colors;
+    public static Color[] colors;
 
     private void Awake()
     {
-        gSizeX = (int)pu.gridSize.x;
-        gSizeY = (int)pu.gridSize.y;
-        grid = new GameObject[gSizeX, gSizeY];
-        initialPos = transform.position;
-        transform.Translate(
-            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
-            pu.gemSize / 2f,
-            0);
-        transform.localScale *= 45f; // Magic number    
-
         colors = new Color[10];
         colors[0] = Color.blue;
         colors[1] = Color.green;
@@ -50,6 +46,24 @@ public class EditorGraphics : MonoBehaviour
         colors[7] = Color.yellow;
         colors[8] = Color.gray;
         colors[9] = Color.white;
+
+        gSizeX = (int)pu.gridSize.x;
+        gSizeY = (int)pu.gridSize.y;
+        grid = new GameObject[gSizeX, gSizeY];
+        RecreateGrid(gSizeX, gSizeY);
+        initialPos = transform.position;
+        initialColorPanelPos = colorSelectionGroup.transform.position;
+        
+        transform.position = initialPos;
+        transform.Translate(
+            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
+            pu.gemSize / 2f,
+            0);
+
+        transform.localScale *= 45f; // Magic number   
+
+        colorSelectionGroup.transform.Translate(0, -.375f * pu.gemSize * pu.colorVector.Length + .5f * pu.gemSize, 0);
+        colorSelector.CreatePanel(pu.gemSize, pu.colorVector);
     }
 
     private void Update()
@@ -166,6 +180,46 @@ public class EditorGraphics : MonoBehaviour
         }
     }
 
+    public void SelectColor(GameObject gem)
+    {
+        // Search if it is color panel
+        for (int i = 0; i < pu.colorVector.Length; ++i)
+        {
+            if (gem.Equals(colorSelector.colorGrid[i]) && !colorSelector.isProcessing)
+            {
+                if (!lu.coloringMode)
+                {
+                    lu.coloringMode = true;
+                }
+                else if (colorSelector.currentSelected == i)
+                {
+                    lu.coloringMode = false;
+                }
+                colorSelector.SelectColor(i);
+            }
+        }
+    }
+
+    public void ColorGem(GameObject gem)
+    {
+        for (int x = 0; x < gSizeX; x++)
+        {
+            for (int y = 0; y < gSizeY; y++)
+            {
+                if (gem.Equals(grid[x, y]))
+                {
+                    DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                    lu.grid[x, y].Gem.Color = pu.colorVector[colorSelector.currentSelected];
+                    if (lu.grid[x, y].Gem.Bonus == 4)
+                    {
+                        lu.grid[x, y].Gem.Bonus = -1;
+                    }
+                    SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
+                }
+            }
+        }
+    }
+
     // If less than two gems were selected
     public void ResetSelection()
     {
@@ -195,6 +249,10 @@ public class EditorGraphics : MonoBehaviour
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
             pu.gemSize / 2f,
             0);
+
+        colorSelectionGroup.transform.position = initialColorPanelPos;
+        colorSelectionGroup.transform.Translate(0, -.375f * pu.gemSize * pu.colorVector.Length + .5f * pu.gemSize, 0);
+        colorSelector.ReCreatePanel(pu.gemSize, pu.colorVector);
     }
 
     // Moves given gem from it's current position to specific x-y position on the grid

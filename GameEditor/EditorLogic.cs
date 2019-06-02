@@ -18,6 +18,8 @@ public class EditorLogic : MonoBehaviour
     public Vector2 gemST = UNSELECTED;
     [HideInInspector]
     public bool readyToSwap = false;
+    [HideInInspector]
+    public bool coloringMode = false;
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
