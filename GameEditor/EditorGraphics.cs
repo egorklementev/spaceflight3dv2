@@ -73,9 +73,14 @@ public class EditorGraphics : MonoBehaviour
 
     public void SpawnGem(int x, int y, int color, int bonus)
     {
+        SpawnGem(x, y, color, bonus, (pu.gemSize + pu.gemOffset) * (gSizeY + 1));        
+    }
+
+    private void SpawnGem(int x, int y, int color, int bonus, float v_offset)
+    {
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
-        position.y += (pu.gemSize + pu.gemOffset) * y + (pu.gemSize + pu.gemOffset) * (gSizeY + 1); // Higher than the grid         
+        position.y += (pu.gemSize + pu.gemOffset) * y + v_offset;
 
         grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus], transform);
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
@@ -214,7 +219,7 @@ public class EditorGraphics : MonoBehaviour
                     {
                         lu.grid[x, y].Gem.Bonus = -1;
                     }
-                    SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
+                    SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
                 }
             }
         }

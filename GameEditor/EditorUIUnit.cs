@@ -16,8 +16,8 @@ public class EditorUIUnit : MonoBehaviour {
     public TextMeshProUGUI energyChanceText;
     [Space(10)]
 
-    public TextMeshProUGUI randomizeColors;
-    public TextMeshProUGUI spawnNewGems;
+    public Toggle randomizeColors;
+    public Toggle spawnNewGems;
     [Space(10)]
 
     // Loading options
@@ -40,32 +40,19 @@ public class EditorUIUnit : MonoBehaviour {
 
     private void Awake()
     {
-        if (pu.randomizeColors)
-        {
-            randomizeColors.text = "Yes";
-        }
-        else
-        {
-            randomizeColors.text = "No";
-        }
+        randomizeColors.isOn = pu.randomizeColors;
+        spawnNewGems.isOn = pu.spawnNewGems;
 
-        if (pu.spawnNewGems)
-        {
-            spawnNewGems.text = "Yes";
-            incrBonus.interactable = true;
-            decrBonus.interactable = true;
-            incrEnergy.interactable = true;
-            decrEnergy.interactable = true;
-        }
-        else
-        {
-            spawnNewGems.text = "No";
-            incrBonus.interactable = false;
-            decrBonus.interactable = false;
-            incrEnergy.interactable = false;
-            decrEnergy.interactable = false;
-        }
+        // Because of the nature of Toggles we need to 
+        // update the values accordingly
+        pu.randomizeColors = randomizeColors.isOn;
+        pu.spawnNewGems = spawnNewGems.isOn;
 
+        incrBonus.interactable = pu.spawnNewGems;
+        decrBonus.interactable = pu.spawnNewGems;
+        incrEnergy.interactable = pu.spawnNewGems;
+        decrEnergy.interactable = pu.spawnNewGems;
+        
         //saveGroup.SwitchFade();
         //loadingGroup.SwitchFade();
 
@@ -91,35 +78,17 @@ public class EditorUIUnit : MonoBehaviour {
 
     public void SwitchColorRandomization()
     {
-        if (pu.randomizeColors)
-        {
-            randomizeColors.text = "No";
-        } else
-        {
-            randomizeColors.text = "Yes";
-        }
         pu.randomizeColors = !pu.randomizeColors;
     }
 
     public void SwitchNewGemsSpawn()
     {
-        if (pu.spawnNewGems)
-        {
-            spawnNewGems.text = "No";
-            incrBonus.interactable = false;
-            decrBonus.interactable = false;
-            incrEnergy.interactable = false;
-            decrEnergy.interactable = false;
-        }
-        else
-        {
-            spawnNewGems.text = "Yes";
-            incrBonus.interactable = true;
-            decrBonus.interactable = true;
-            incrEnergy.interactable = true;
-            decrEnergy.interactable = true;
-        }
-        pu.spawnNewGems = !pu.spawnNewGems;        
+        pu.spawnNewGems = !pu.spawnNewGems;
+
+        incrBonus.interactable = pu.spawnNewGems;
+        decrBonus.interactable = pu.spawnNewGems;
+        incrEnergy.interactable = pu.spawnNewGems;
+        decrEnergy.interactable = pu.spawnNewGems;              
     }
     
     public void HidePreOptions()

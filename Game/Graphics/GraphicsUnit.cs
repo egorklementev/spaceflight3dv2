@@ -241,7 +241,8 @@ public class GraphicsUnit : MonoBehaviour {
         {
             loseText.SetActive(true);
         }
-        fadeManager.FadeToLevel(1);
+        fadeManager.SetSpeed(.25f);
+        fadeManager.FadeToLevel(1); // TODO: result screen        
     }
 
     public void SwitchEnergy(int i)
