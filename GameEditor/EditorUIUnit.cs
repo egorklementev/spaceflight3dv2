@@ -63,7 +63,10 @@ public class EditorUIUnit : MonoBehaviour {
     void Update () {
 
         fpsText.text = "FPS: " + (1f / Time.deltaTime).ToString("0");
-        slotText.text = "Slot " + EditorParams.currentSlot.ToString() + "/" + EditorParams.slotNumber.ToString();
+        slotText.text = EditorParams.currentSlot == -1 ? 
+            "Temprorary slot"
+            :
+            "Slot " + EditorParams.currentSlot.ToString() + "/" + EditorParams.slotNumber.ToString();
 
         xSizeText.text = "Grid width: " + pu.gridSize.x.ToString("0");
         ySizeText.text = "Grid heigth: " + pu.gridSize.y.ToString("0");
@@ -72,8 +75,8 @@ public class EditorUIUnit : MonoBehaviour {
         bonusChanceText.text = "Bonus chance: " + pu.bonusesPercentage.ToString();
         energyChanceText.text = "Energy chance: " + pu.energyPercentage.ToString();
 
-        levelToLoadText.text = EditorParams.currentSlot.ToString();
-        levelToSaveText.text = EditorParams.currentSlot.ToString();
+        levelToLoadText.text = EditorParams.currentSlot == -1 ? "none" : EditorParams.currentSlot.ToString();
+        levelToSaveText.text = levelToLoadText.text;
     }
 
     public void SwitchColorRandomization()

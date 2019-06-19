@@ -511,8 +511,7 @@ public class LogicUnit : MonoBehaviour {
     public void UpdateDataAfterLoading()
     {
         gSizeX = (int)pu.gridSize.x;
-        gSizeY = (int)pu.gridSize.y;
-        suboptimalMoves = pu.maximumEnergy;
+        gSizeY = (int)pu.gridSize.y;        
     }
 
     // If less than two gems were selected

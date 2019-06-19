@@ -253,12 +253,28 @@ public class GraphicsUnit : MonoBehaviour {
         {
             child.gameObject.GetComponent<Renderer>().material.color *= 
                 energyBar[i].GetComponent<Rotation>().enabled ? 5f : .2f;
+            child.localScale *= energyBar[i].GetComponent<Rotation>().enabled ? 1.17647f : 0.85f;
         }
     }    
 
     public void RecreateGrid(int newGSizeX, int newGSizeY)
     {
         grid = new GameObject[newGSizeX, newGSizeY];
+    }
+
+    public void RecreateEnergyBar(int maxEnergy)
+    {
+        foreach (GameObject g in energyBar)
+        {
+            Destroy(g);
+        }
+
+        energyBar = new GameObject[maxEnergy];
+
+        for (int i = 0; i < pu.maximumEnergy; i++)
+        {
+            AddEnergy(i);
+        }
     }
 
     public void UpdateDataAfterLoading()
@@ -276,7 +292,7 @@ public class GraphicsUnit : MonoBehaviour {
     private void AddEnergy(int i)
     {
         energyBar[i] = Instantiate(energyPrefab, energyAnchor.transform);
-        energyBar[i].transform.localScale = new Vector3(1.5f * pu.gemSize, pu.gemSize, pu.gemSize);
+        energyBar[i].transform.localScale = new Vector3(1.05f * pu.gemSize, pu.gemSize, pu.gemSize);
         energyBar[i].transform.Translate(
             .75f * energyBar[i].transform.localScale.x * i, 0f, 0f
             );

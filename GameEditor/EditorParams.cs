@@ -43,7 +43,7 @@ public class EditorParams : MonoBehaviour
     public int[] colorVector;    
 
     public const int slotNumber = 8;
-    public static int currentSlot = 1;
+    public static int currentSlot = -1;
 
     public void InitializeOnStart()
     {
@@ -69,7 +69,9 @@ public class EditorParams : MonoBehaviour
         }
         #endregion        
 
-        ComputeGemSizes();        
+        ComputeGemSizes();
+
+        currentSlot = -1;
 
         gu.gameObject.SetActive(true);
         lu.gameObject.SetActive(true);
@@ -214,7 +216,15 @@ public class EditorParams : MonoBehaviour
     // Tells ParamsUnit to load level containing in 'currentSlot' variable
     public void SetLevelToLoad()
     {
-        ParamUnit.slotToLoad = currentSlot;
+        if (currentSlot == -1)
+        {
+            currentSlot = 0;
+            SaveLevel();
+            ParamUnit.slotToLoad = 0;
+        } else
+        {
+            ParamUnit.slotToLoad = currentSlot;
+        }
     }
 
     public void IncreaseGridSizeX()
@@ -290,6 +300,10 @@ public class EditorParams : MonoBehaviour
     {
         if (currentSlot > 1)
             currentSlot--;
+    }
+    public void InitializeSlot()
+    {
+        currentSlot = 1;
     }
     
 }

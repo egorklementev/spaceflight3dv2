@@ -143,7 +143,7 @@ public class ParamUnit : MonoBehaviour {
         gu.UpdateDataAfterLoading();
         lu.UpdateDataAfterLoading();
 
-        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);        
 
         lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
         for (int x = 0; x < (int)gridSize.x; x++)
@@ -175,6 +175,9 @@ public class ParamUnit : MonoBehaviour {
 
         sequenceSize = ld.sequenceSize;
         maximumEnergy = ld.maximumEnergy;
+
+        lu.suboptimalMoves = maximumEnergy;
+        gu.RecreateEnergyBar(maximumEnergy);
 
         spawnNewGems = ld.spawnNewGems;
         randomizeColors = ld.randomizeColors;
