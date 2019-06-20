@@ -11,10 +11,17 @@ public class EditorGraphics : MonoBehaviour
     [Header("Prefabs")]
     public GameObject[] gems; // Gems including bonuses
     [Space(10)]
-
+    
     [Header("Color selection panel")]
     public GameObject colorSelectionGroup;
     public ColorSelection colorSelector;
+    public float colorSize = 1f; 
+    [Space(10)]
+
+    [Header("Bonus selection panel")]
+    public GameObject bonusSelectionGroup;
+    public BonusSelection bonusSelector;
+    public float bonusSize = 1f;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -29,7 +36,6 @@ public class EditorGraphics : MonoBehaviour
     private int gSizeY;
 
     private Vector3 initialPos;
-    private Vector3 initialColorPanelPos;
 
     public static Color[] colors;
 
@@ -52,18 +58,17 @@ public class EditorGraphics : MonoBehaviour
         grid = new GameObject[gSizeX, gSizeY];
         RecreateGrid(gSizeX, gSizeY);
         initialPos = transform.position;
-        initialColorPanelPos = colorSelectionGroup.transform.position;
         
         transform.position = initialPos;
         transform.Translate(
-            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
+            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) + pu.gemSize / 2f,
             pu.gemSize / 2f,
             0);
 
         transform.localScale *= 45f; // Magic number   
-
-        colorSelectionGroup.transform.Translate(0, -.375f * pu.gemSize * pu.colorVector.Length + .5f * pu.gemSize, 0);
-        colorSelector.CreatePanel(pu.gemSize, pu.colorVector);
+        
+        colorSelector.CreatePanel(pu.gemSize * colorSize, pu.colorVector);        
+        bonusSelector.CreatePanel(pu.gemSize * bonusSize, pu.permittedBonuses);
     }
 
     private void Update()
@@ -76,7 +81,7 @@ public class EditorGraphics : MonoBehaviour
         SpawnGem(x, y, color, bonus, (pu.gemSize + pu.gemOffset) * (gSizeY + 1));        
     }
 
-    private void SpawnGem(int x, int y, int color, int bonus, float v_offset)
+    public void SpawnGem(int x, int y, int color, int bonus, float v_offset)
     {
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
@@ -192,8 +197,14 @@ public class EditorGraphics : MonoBehaviour
         {
             if (gem.Equals(colorSelector.colorGrid[i]) && !colorSelector.isProcessing)
             {
-                if (!lu.coloringMode)
+                if (!lu.coloringMode && !lu.bonusingMode)
                 {
+                    lu.coloringMode = true;
+                }
+                else if (lu.bonusingMode)
+                {
+                    bonusSelector.SelectBonus(bonusSelector.currentSelected);
+                    lu.bonusingMode = false;
                     lu.coloringMode = true;
                 }
                 else if (colorSelector.currentSelected == i)
@@ -201,6 +212,32 @@ public class EditorGraphics : MonoBehaviour
                     lu.coloringMode = false;
                 }
                 colorSelector.SelectColor(i);
+            }
+        }
+    }
+
+    public void SelectBonus(GameObject gem)
+    {
+        // Search if it is bonus panel
+        for (int i = 0; i < pu.permittedBonuses.Length; ++i)
+        {
+            if (gem.Equals(bonusSelector.bonusGrid[i]) && !bonusSelector.isProcessing)
+            {
+                if (!lu.bonusingMode && !lu.coloringMode)
+                {
+                    lu.bonusingMode = true;
+                }
+                else if (lu.coloringMode)
+                {
+                    colorSelector.SelectColor(colorSelector.currentSelected);
+                    lu.coloringMode = false;
+                    lu.bonusingMode = true;
+                }
+                else if (bonusSelector.currentSelected == i)
+                {
+                    lu.bonusingMode = false;
+                }
+                bonusSelector.SelectBonus(i);
             }
         }
     }
@@ -215,15 +252,52 @@ public class EditorGraphics : MonoBehaviour
                 {
                     DestroyGem(x, y, lu.grid[x, y].Gem.Color);
                     lu.grid[x, y].Gem.Color = pu.colorVector[colorSelector.currentSelected];
-                    if (lu.grid[x, y].Gem.Bonus == 4)
+                    switch(lu.grid[x, y].Gem.Bonus)
                     {
-                        lu.grid[x, y].Gem.Bonus = -1;
+                        case 2:
+                        case 4:
+                            lu.grid[x, y].Gem.Bonus = -1;
+                            break;
                     }
                     SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
                 }
             }
         }
     }
+
+    public void BonusGem(GameObject gem)
+    {
+        for (int x = 0; x < gSizeX; x++)
+        {
+            for (int y = 0; y < gSizeY; y++)
+            {
+                if (gem.Equals(grid[x, y]))
+                {
+                    DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+
+                    switch (pu.permittedBonuses[bonusSelector.currentSelected])
+                    {    
+                        case 2:                       
+                            lu.grid[x, y].Gem.Color = 8;
+                            break;
+                        case 4:
+                            lu.grid[x, y].Gem.Color = 9;
+                            break;
+                        default:
+                            if (lu.grid[x, y].Gem.Bonus == 2 || lu.grid[x, y].Gem.Bonus == 4)
+                            {
+                                lu.grid[x, y].Gem.Color = pu.GetRandomColor();
+                            }
+                            break;
+                    }
+
+
+                    lu.grid[x, y].Gem.Bonus = pu.permittedBonuses[bonusSelector.currentSelected];                    
+                    SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
+                }
+            }
+        }
+    }    
 
     // If less than two gems were selected
     public void ResetSelection()
@@ -254,10 +328,9 @@ public class EditorGraphics : MonoBehaviour
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
             pu.gemSize / 2f,
             0);
-
-        colorSelectionGroup.transform.position = initialColorPanelPos;
-        colorSelectionGroup.transform.Translate(0, -.375f * pu.gemSize * pu.colorVector.Length + .5f * pu.gemSize, 0);
-        colorSelector.ReCreatePanel(pu.gemSize, pu.colorVector);
+        
+        colorSelector.ReCreatePanel(pu.gemSize * colorSize, pu.colorVector);
+        bonusSelector.ReCreatePanel(pu.gemSize * bonusSize, pu.permittedBonuses);
     }
 
     // Moves given gem from it's current position to specific x-y position on the grid

@@ -171,7 +171,7 @@ public class ParamUnit : MonoBehaviour {
         }
 
         colorsAvailable = ld.availableColors;
-        ld.availableBonuses.CopyTo(permittedBonuses, 0);
+        permittedBonuses = ld.availableBonuses;
 
         sequenceSize = ld.sequenceSize;
         maximumEnergy = ld.maximumEnergy;

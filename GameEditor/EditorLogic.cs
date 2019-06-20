@@ -20,6 +20,8 @@ public class EditorLogic : MonoBehaviour
     public bool readyToSwap = false;
     [HideInInspector]
     public bool coloringMode = false;
+    [HideInInspector]
+    public bool bonusingMode = false;
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 

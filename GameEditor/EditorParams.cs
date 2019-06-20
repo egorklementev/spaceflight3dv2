@@ -227,6 +227,21 @@ public class EditorParams : MonoBehaviour
         }
     }
 
+    public void ResetGrid()
+    {
+        for (int x = 0; x < gridSize.x; x++)
+        {
+            for (int y = 0; y < gridSize.y; y++)
+            {
+                gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+
+                lu.grid[x, y].Gem = lu.GetRandomGem();
+
+                gu.SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
+            }
+        }
+    }
+
     public void IncreaseGridSizeX()
     {
         gridSize.x += 1f;
@@ -289,6 +304,21 @@ public class EditorParams : MonoBehaviour
     {
         if (energyPercentage > 0)
             energyPercentage--;
+    }
+
+    public void IncreaseMaxEnergy()
+    {
+        if (maximumEnergy < 10)
+        {
+            maximumEnergy++;
+        }
+    }
+    public void DecreaseMaxEnergy()
+    {
+        if (maximumEnergy > 0)
+        {
+            maximumEnergy--;
+        }
     }
 
     public void IncreaseSlot()

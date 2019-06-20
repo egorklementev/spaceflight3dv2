@@ -14,6 +14,7 @@ public class EditorUIUnit : MonoBehaviour {
     public TextMeshProUGUI sequenceSizeText;
     public TextMeshProUGUI bonusChanceText;
     public TextMeshProUGUI energyChanceText;
+    public TextMeshProUGUI maxEnergyText;
     [Space(10)]
 
     public Toggle randomizeColors;
@@ -74,6 +75,7 @@ public class EditorUIUnit : MonoBehaviour {
         sequenceSizeText.text = "Sequence size: " + pu.sequenceSize.ToString();
         bonusChanceText.text = "Bonus chance: " + pu.bonusesPercentage.ToString();
         energyChanceText.text = "Energy chance: " + pu.energyPercentage.ToString();
+        maxEnergyText.text = "Maximum energy: " + pu.maximumEnergy.ToString();
 
         levelToLoadText.text = EditorParams.currentSlot == -1 ? "none" : EditorParams.currentSlot.ToString();
         levelToSaveText.text = levelToLoadText.text;

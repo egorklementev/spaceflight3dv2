@@ -41,6 +41,9 @@ public class EditorInput : MonoBehaviour
                 if (hitInfo.transform.gameObject.tag == "Gem")
                 {
                     gu.SelectColor(hitInfo.transform.gameObject);
+                } else if (hitInfo.transform.gameObject.tag == "BonusBar")
+                {
+                    gu.SelectBonus(hitInfo.transform.gameObject);
                 }
             }
 
@@ -51,12 +54,17 @@ public class EditorInput : MonoBehaviour
             bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
             if (hit)
             {
-                if ((!lu.coloringMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
+                if ((!lu.coloringMode && !lu.bonusingMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
                 {
                     gu.SelectGem(hitInfo.transform.gameObject);
-                } else if ((lu.coloringMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
+                }
+                else if ((lu.coloringMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
                 {
                     gu.ColorGem(hitInfo.transform.gameObject);
+                }
+                else if ((lu.bonusingMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
+                {
+                    gu.BonusGem(hitInfo.transform.gameObject);
                 }
             }
         }

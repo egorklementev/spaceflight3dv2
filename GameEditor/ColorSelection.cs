@@ -19,22 +19,23 @@ public class ColorSelection : MonoBehaviour {
     {
         colorGrid = new GameObject[colors.Length];
 
-        transform.localScale *= 45f;
+        float param = 1.25f;
+        transform.localScale *= 45f * param;
         int iter = 0;
         foreach (int i in colors)
         {
             Vector3 position = transform.position;
-            position.y += iter * 0.75f * gemSize;
+            position.y += iter * 1.25f * gemSize * param;
 
             colorGrid[iter] = Instantiate(gemMesh, transform);
-            colorGrid[iter].transform.localScale = new Vector3(.5f * gemSize, .5f * gemSize, .5f * gemSize);
+            colorGrid[iter].transform.localScale = new Vector3(gemSize, gemSize, gemSize);
             colorGrid[iter].GetComponent<Renderer>().material.color = EditorGraphics.colors[i];
             colorGrid[iter].transform.position = position;
 
             iter++;
         }
 
-        normalScale = .5f * gemSize;
+        normalScale = gemSize;
     }
 
     public void ReCreatePanel(float gemSize, int[] colors)
@@ -50,10 +51,10 @@ public class ColorSelection : MonoBehaviour {
         foreach (int i in colors)
         {
             Vector3 position = transform.position;
-            position.y += iter * 0.75f * gemSize;
+            position.y += iter * 1.25f * gemSize;
 
             colorGrid[iter] = Instantiate(gemMesh, transform);
-            colorGrid[iter].transform.localScale = new Vector3(.5f * gemSize, .5f * gemSize, .5f * gemSize);
+            colorGrid[iter].transform.localScale = new Vector3(gemSize, gemSize, gemSize);
             colorGrid[iter].GetComponent<Renderer>().material.color = EditorGraphics.colors[i];
             colorGrid[iter].transform.position = position;
 
