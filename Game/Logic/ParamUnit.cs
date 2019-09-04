@@ -42,6 +42,8 @@ public class ParamUnit : MonoBehaviour {
     [HideInInspector]
     public float gemSize;
 
+    public static int slotToLoad = -1;
+
     private int[] colorVector;
 
     private void Start()
@@ -66,11 +68,16 @@ public class ParamUnit : MonoBehaviour {
             }
         }
         #endregion
-
+        
         ComputeGemSizes();
 
         gu.gameObject.SetActive(true);
         lu.gameObject.SetActive(true);
+
+        if (slotToLoad != -1)
+        {
+            LoadLevel();     
+        }
     }
         
     public int GetRandomColor()
@@ -110,26 +117,21 @@ public class ParamUnit : MonoBehaviour {
         gemSize /= pixelsInUnit;
         gemOffset = gemOffsetParam * gemSize;
     }
-
-    // Saves current state of the game in the persistent directory of the game
-    public void SaveLevel()
-    {
-        SaveUnit.SaveLevel(this, lu);
-    }
-
+    
     // Loads previously saved state of the game and replaces current one
+    // Uses 'currentSlot' variable to identify the file from which to load
     public void LoadLevel()
     {
-        LevelData ld = SaveUnit.LoadLevel();
-
+        LevelData ld = SaveUnit.LoadLevel(slotToLoad);
+        
         for (int x = 0; x < gridSize.x; x++)
         {
             for (int y = 0; y < gridSize.y; y++)
             {
-                if (!lu.grid[x,y].IsEmpty())
+                if (!lu.grid[x, y].IsEmpty())
                 {
                     gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
-                }                
+                }
             }
         }
 
@@ -141,7 +143,7 @@ public class ParamUnit : MonoBehaviour {
         gu.UpdateDataAfterLoading();
         lu.UpdateDataAfterLoading();
 
-        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);        
 
         lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
         for (int x = 0; x < (int)gridSize.x; x++)
@@ -159,22 +161,28 @@ public class ParamUnit : MonoBehaviour {
                         }
                     };
                     gu.SpawnGem((int)lu.grid[x, y].Position.x, (int)lu.grid[x, y].Position.y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus);
-                } else
+                }
+                else
                 {
                     lu.grid[x, y] = new Cell(new Vector2(x, y));
                     lu.grid[x, y].SetEmpty();
-                }                
+                }
             }
         }
 
         colorsAvailable = ld.availableColors;
-        ld.availableBonuses.CopyTo(permittedBonuses, 0);
+        permittedBonuses = ld.availableBonuses;
 
         sequenceSize = ld.sequenceSize;
         maximumEnergy = ld.maximumEnergy;
 
+        lu.suboptimalMoves = maximumEnergy;
+        gu.RecreateEnergyBar(maximumEnergy);
+
         spawnNewGems = ld.spawnNewGems;
         randomizeColors = ld.randomizeColors;
+
+        slotToLoad = -1;
     }
 
 }

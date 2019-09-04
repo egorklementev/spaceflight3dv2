@@ -8,11 +8,11 @@ public class Scale : MonoBehaviour {
 
     private Vector3 localScale;
 
-    private void Awake()
+    public void SetLocalScale(Vector3 lscale)
     {
-        localScale = transform.localScale;
+        localScale = lscale;
     }
-
+    
     void Update () {
         float param = scale * Mathf.Cos(speed * Time.time);
         transform.localScale = localScale + new Vector3(param, param, param);
