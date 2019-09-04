@@ -1,25 +1,34 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+/// <summary>
+/// A class performing all graphics on the screen, e.g. gem movement, scaling, animations and etc.
+/// </summary>
 public class GraphicsUnit : MonoBehaviour {
     
     [Header("Meshes")]
-    public Mesh[] gridGemsMeshes;
-    public Mesh[] gridGemsDParts;
+    public Mesh[] gridGemsMeshes; // Meshes of regular gems
+    public Mesh[] gridGemsDParts; // Meshed of destroyed parts
     [Space(10)]
 
     [Header("Prefabs")]
     public GameObject[] gems; // Gems including bonuses
     public GameObject gemPart; // Part of the destroyed gem
-    public GameObject meteorPrefab; // Meteor falling on the grid
-    public GameObject energyAnchor; 
+    public GameObject meteorPrefab; 
+    public GameObject energyBarObj; // Initial position of the energy bar
     public GameObject energyPrefab; 
     public ParticleSystem explosionPrefab;
+    public Material iceMaterial;
     [Space(10)]
 
     [Header("UI")]
     public GameObject winText;
     public GameObject loseText;
+    [Space(10)]
+
+    [Header("Anchors")]
+    public GameObject energyBarAnchor;
+    public GameObject gemGridAnchor;
     [Space(10)]
 
     [Header("Units' refs")]
@@ -29,32 +38,42 @@ public class GraphicsUnit : MonoBehaviour {
     public FadeManager fadeManager;
 
     [HideInInspector]
-    public int WorkingObjs { get; set; }
+    public int WorkingObjs { get; set; } // The number of objects that are in a working state, e.g. we should wait for them
 
     private GameObject[] energyBar;
-    private GameObject[,] grid;
+    private GameObject[,] grid; // Instances of gems prefabs
 
-    private int gSizeX;
-    private int gSizeY;
+    private int gSizeX; // Width of the gem grid
+    private int gSizeY; // Height of the gem grid
 
-    private Vector3 initialPos;
+    private Vector3 initialPos; // Initial position of the graphics unit to properly calculate its new position
 
     private Color[] colors;
+    private float energyPrefabSize = 1f;
 
     private void Awake()
     {
         WorkingObjs = 0;
+
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
+
         grid = new GameObject[gSizeX, gSizeY];
+
         initialPos = transform.position;
+
+        // Translation of the grid anchor (graphics unit) from the center of the screen
+        // to the minus half of the length of the gems + offsets between them
         transform.Translate(
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
-            pu.gemSize / 2f,
+            pu.gemSize,
             0);
-        transform.localScale *= 45f; // Magic number
+        gemGridAnchor.transform.position = transform.position;
 
         energyBar = new GameObject[pu.maximumEnergy];
+        ComputeEnergyPrefabSize();
+        energyBarObj.transform.Translate(.5f * energyPrefabSize, -.75f * energyPrefabSize, 0f);
+        energyBarAnchor.transform.position = energyBarObj.transform.position;
         for (int i = 0; i < pu.maximumEnergy; i++) 
         {
             AddEnergy(i);
@@ -71,20 +90,41 @@ public class GraphicsUnit : MonoBehaviour {
         colors[7] = Color.yellow;
         colors[8] = Color.gray;
         colors[9] = Color.white;
-    }
-
-    private void Update()
-    {
-
-    }
+    }    
     
+    /// <summary>
+    /// Spawns a gem on the grid with the default initial height of the spawn
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="x">X-pos on the grid</param>
+    /// <param name="y">Y-pos on the grid</param>
+    /// <param name="color">Color of the gem</param>
+    /// <param name="bonus">Bonus of the gem</param>
     public void SpawnGem(int x, int y, int color, int bonus)
+    {
+        SpawnGem(x, y, color, bonus, (pu.gemSize + pu.gemOffset) * (gSizeY + 1));        
+    }
+
+    /// <summary>
+    /// Spawns a gem on the grid with the parameterized initial height of the spawn
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="x">X-pos on the grid</param>
+    /// <param name="y">Y-pos on the grid</param>
+    /// <param name="color">Color of the gem</param>
+    /// <param name="bonus">Bonus of the gem</param>
+    /// <param name="v_offset">Y-distance from the spawn positon of the gem where it will appear initially </param>
+    public void SpawnGem(int x, int y, int color, int bonus, float v_offset)
     {
         Vector3 position = transform.position;
         position.x += (pu.gemSize + pu.gemOffset) * x;
-        position.y += (pu.gemSize + pu.gemOffset) * y + (pu.gemSize + pu.gemOffset) * (gSizeY + 1); // Higher than the grid         
-      
-        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus], transform);
+        position.y += (pu.gemSize + pu.gemOffset) * y + v_offset; // Higher than the grid         
+
+        grid[x, y] = Instantiate(gems[bonus == (int)ParamUnit.Bonus.NONE ? 0 : bonus], gemGridAnchor.transform);
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         if (grid[x, y].GetComponent<Scale>() != null)
         {
@@ -92,15 +132,24 @@ public class GraphicsUnit : MonoBehaviour {
         }
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
-        grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];        
-        if (bonus == 3)
+        grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];
+        if (bonus == (int)ParamUnit.Bonus.SAME_COLOR)
         {
             grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[8];
         }
 
-        StartCoroutine(MoveGem(grid[x, y], x, y));
+        if (v_offset != 0f)
+            StartCoroutine(MoveGem(grid[x, y], x, y));
     }
 
+    /// <summary>
+    /// Swaps chosen gems
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="pos1">Vector position of the first gem</param>
+    /// <param name="pos2">Vector position of the second gem</param>
     public void SwapGems(Vector2 pos1, Vector2 pos2)
     {
         // * In case we perform swap with empty cell
@@ -118,7 +167,17 @@ public class GraphicsUnit : MonoBehaviour {
         grid[(int)pos2.x, (int)pos2.y] = temp;
     }
 
-    public void DestroyGem(int x, int y, int color)
+    /// <summary>
+    /// Destroys chosen gem
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="x">X-pos of the gem</param>
+    /// <param name="y">Y-pos of the gem</param>
+    /// <param name="color">Color of the gem</param>
+    /// <param name="doSpawnParts">Do spawn destroyed parts or don't</param>
+    public void DestroyGem(int x, int y, int color, bool doSpawnParts)
     {
         Destroy(grid[x, y]);
         grid[x, y] = null;
@@ -127,34 +186,47 @@ public class GraphicsUnit : MonoBehaviour {
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y;
 
-        int num = Random.Range(2, 4);
-        for (int i = 0; i < num; i++)
+        if (doSpawnParts)
         {
-            GameObject dGemPart = Instantiate(gemPart);
-            Destroy(dGemPart, pu.dPartsLifetime);
-            dGemPart.transform.parent = transform;
-            dGemPart.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
-            dGemPart.transform.position = position;
-            dGemPart.GetComponent<Renderer>().material.color = colors[color];
-            dGemPart.GetComponent<MeshFilter>().mesh = gridGemsDParts[Random.Range(0, 3)];
-            dGemPart.GetComponent<BoxCollider>().size = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+            int num = Random.Range(2, 4);
+            for (int i = 0; i < num; i++)
+            {
+                GameObject dGemPart = Instantiate(gemPart, gemGridAnchor.transform);
+                Destroy(dGemPart, pu.dPartsLifetime);
+                dGemPart.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+                dGemPart.transform.position = position;
+                dGemPart.GetComponent<Renderer>().material.color = colors[color];
+                dGemPart.GetComponent<MeshFilter>().mesh = gridGemsDParts[Random.Range(0, 3)];
+                dGemPart.GetComponent<BoxCollider>().size = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
 
-            Vector3 forceDirection = new Vector3(
-                Random.Range(-pu.destructionForce, pu.destructionForce),
-                Random.Range(-pu.destructionForce, pu.destructionForce),
-                Random.Range(-pu.destructionForce, pu.destructionForce)
-            );
-            dGemPart.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
+                Vector3 forceDirection = new Vector3(
+                    Random.Range(-pu.destructionForce, pu.destructionForce),
+                    Random.Range(-pu.destructionForce, pu.destructionForce),
+                    Random.Range(-pu.destructionForce, pu.destructionForce)
+                );
+                dGemPart.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
+            }
         }        
     }
+    public void DestroyGem(int x, int y, int color)
+    {
+        DestroyGem(x, y, color, true);
+    }
 
-    public void ActivateBonus1(int x, int y)
+    /// <summary>
+    /// Sends meteor to the chosen position on the grid
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="x">X-pos of the destination</param>
+    /// <param name="y">Y-pos of the destination</param>
+    public void ActivateMeteorBonus(int x, int y)
     {
         int _x = Random.Range(0, gSizeX);
         int _y = Random.Range(0, gSizeY);
 
-        GameObject meteor = Instantiate(meteorPrefab);
-        meteor.transform.parent = transform;
+        GameObject meteor = Instantiate(meteorPrefab, gemGridAnchor.transform);
         meteor.transform.position = GetGraphPos(x, y);
         meteor.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
         meteor.transform.Translate(0f, pu.meteorOffset, -1f);
@@ -162,8 +234,14 @@ public class GraphicsUnit : MonoBehaviour {
             meteor, _x, _y,
             lu.grid[_x, _y].IsEmpty() ? 0 : lu.grid[_x, _y].Gem.Color));
     }
-    
-    // Operates with the selection of the gems
+
+    /// <summary>
+    /// Performs scaling (selecting) of the chosen gem after checking with the logic unit and already selected gems
+    /// </summary>
+    /// <remarks>
+    /// Changes graphics and logic
+    /// </remarks>
+    /// <param name="gem">A gem from the input unit that was selected by user</param>
     public void SelectGem(GameObject gem)
     {
         // Search for gem inside grid array
@@ -173,7 +251,7 @@ public class GraphicsUnit : MonoBehaviour {
             {
                 if (gem.Equals(grid[x, y]))
                 {
-                    if (lu.IsGemValid(x, y))
+                    if (lu.IsGemValidToSelect(x, y))
                     {
                         if (lu.NoOneSelected())
                         {
@@ -217,7 +295,12 @@ public class GraphicsUnit : MonoBehaviour {
         }      
     }
 
-    // If less than two gems were selected
+    /// <summary>
+    /// Resets selection if not enough conditions are satisfied
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
     public void ResetSelection()
     {
         if (lu.gemSO != new Vector2(-1, -1))
@@ -232,6 +315,10 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Draws end screen with the corresponding message
+    /// </summary>
+    /// <param name="isVictory">Whether or not user won in this round</param>
     public void DrawEndScreen(bool isVictory)
     {
         if (isVictory)
@@ -241,10 +328,16 @@ public class GraphicsUnit : MonoBehaviour {
         {
             loseText.SetActive(true);
         }
-        fadeManager.SetSpeed(.25f);
-        fadeManager.FadeToLevel(1); // TODO: result screen        
+        fadeManager.SetLevel(1); // TODO: result screen        
     }
 
+    /// <summary>
+    /// Enables or disables (according to the previous state) chosen energy object on the energy bar
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="i">Index of the energy object in the energy bar</param>
     public void SwitchEnergy(int i)
     {
         energyBar[i].GetComponent<Rotation>().enabled = !energyBar[i].GetComponent<Rotation>().enabled;
@@ -255,13 +348,28 @@ public class GraphicsUnit : MonoBehaviour {
                 energyBar[i].GetComponent<Rotation>().enabled ? 5f : .2f;
             child.localScale *= energyBar[i].GetComponent<Rotation>().enabled ? 1.17647f : 0.85f;
         }
-    }    
+    }
 
+    /// <summary>
+    /// Recreates grid with the new size
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="newGSizeX">New width of the grid</param>
+    /// <param name="newGSizeY">New height of the grid</param>
     public void RecreateGrid(int newGSizeX, int newGSizeY)
     {
         grid = new GameObject[newGSizeX, newGSizeY];
     }
 
+    /// <summary>
+    /// Recreates energy bar
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="maxEnergy">New value of the maximum energy</param>
     public void RecreateEnergyBar(int maxEnergy)
     {
         foreach (GameObject g in energyBar)
@@ -277,6 +385,53 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Respawns gem with the ice destruction animation
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="x">X-pos of the gem</param>
+    /// <param name="y">Y-pos of the gem</param>
+    /// <param name="newColor">New color of the gem</param>
+    /// <param name="newBonus">New bonus of the gem</param>
+    public void RespawnGem(int x, int y, int newColor, int newBonus)
+    {
+        Destroy(grid[x, y]);
+
+        Vector3 position = transform.position;
+        position.x += (pu.gemSize + pu.gemOffset) * x;
+        position.y += (pu.gemSize + pu.gemOffset) * y;
+
+        int num = Random.Range(2, 4);
+        for (int i = 0; i < num; i++)
+        {
+            GameObject dGemPart = Instantiate(gemPart);
+            Destroy(dGemPart, pu.dPartsLifetime);
+            dGemPart.transform.parent = transform;
+            dGemPart.transform.localScale = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+            dGemPart.transform.position = position;
+            dGemPart.GetComponent<Renderer>().material = iceMaterial;
+            dGemPart.GetComponent<MeshFilter>().mesh = gridGemsDParts[Random.Range(0, 3)];
+            dGemPart.GetComponent<BoxCollider>().size = new Vector3(.75f * pu.gemSize, .75f * pu.gemSize, .75f * pu.gemSize);
+
+            Vector3 forceDirection = new Vector3(
+                Random.Range(-pu.destructionForce, pu.destructionForce),
+                Random.Range(-pu.destructionForce, pu.destructionForce),
+                Random.Range(-pu.destructionForce, pu.destructionForce)
+            );
+            dGemPart.GetComponent<Rigidbody>().AddForce(forceDirection, ForceMode.Impulse);
+        }
+
+        SpawnGem(x, y, newColor, newBonus, 0f);
+    }
+
+    /// <summary>
+    /// Updates needed variables after loading of the saved level
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
     public void UpdateDataAfterLoading()
     {
         gSizeX = (int)pu.gridSize.x;
@@ -284,21 +439,48 @@ public class GraphicsUnit : MonoBehaviour {
         transform.position = initialPos;
         transform.Translate(
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
-            pu.gemSize / 2f,
+            pu.gemSize,
             0);        
     }
 
-    // Creates an instance to the anchor
+    /// <summary>
+    /// Adds new prefab of the energy object to the energy bar
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// </remarks>
+    /// <param name="i">Index of the energy object to be added</param>
     private void AddEnergy(int i)
     {
-        energyBar[i] = Instantiate(energyPrefab, energyAnchor.transform);
-        energyBar[i].transform.localScale = new Vector3(1.05f * pu.gemSize, pu.gemSize, pu.gemSize);
+        energyBar[i] = Instantiate(energyPrefab, energyBarAnchor.transform);
+        energyBar[i].transform.localScale = new Vector3(energyPrefabSize, .66f * energyPrefabSize, .66f * energyPrefabSize);
         energyBar[i].transform.Translate(
             .75f * energyBar[i].transform.localScale.x * i, 0f, 0f
             );
     }
 
-    // Moves given gem from it's current position to specific x-y position on the grid
+    /// <summary>
+    /// Computes proper size of the energy bat items
+    /// </summary>
+    private void ComputeEnergyPrefabSize()
+    {
+        // Size of the gems sides
+        float height = 2f * pu.mainCamera.orthographicSize;
+        float width = height * pu.mainCamera.aspect;
+        energyPrefabSize = 0.5f * width / (10f - 9f * .25f);
+    }
+
+    /// <summary>
+    /// Moves gem from its initial position to the specified position
+    /// </summary>
+    /// <remarks>
+    /// Changes only graphics
+    /// Some functions will wait until this coroutine is over
+    /// </remarks>
+    /// <param name="gem">Gem to be moved</param>
+    /// <param name="x">X-pos of the destination</param>
+    /// <param name="y">Y-pos of the destination</param>
+    /// <returns></returns>
     private IEnumerator MoveGem(GameObject gem, int x, int y)
     {
         WorkingObjs++;
@@ -318,6 +500,19 @@ public class GraphicsUnit : MonoBehaviour {
         WorkingObjs--;
     }
 
+    /// <summary>
+    /// Moves meteor to the specified location on the grid and at the end destroys a gem with given position and color
+    /// </summary>
+    /// <remarks>
+    /// Changes graphics and logic
+    /// Will wait for some functions
+    /// Some functions will wait until this coroutine is over
+    /// </remarks>
+    /// <param name="meteor">Instance of the meteor prefab with predefined location and scale</param>
+    /// <param name="x">X-pos of the meteor's destination</param>
+    /// <param name="y">Y-pos of the meteor's destination</param>
+    /// <param name="color">The color of the gem to be destroyed</param>
+    /// <returns></returns>
     private IEnumerator MoveMeteor(GameObject meteor, int x, int y, int color)
     {
         while(WorkingObjs > 0)
@@ -356,20 +551,31 @@ public class GraphicsUnit : MonoBehaviour {
         WorkingObjs--;
     }
 
-    // Scales given gem to some scale
+    /// <summary>
+    /// Scales given gem to the given scale
+    /// </summary>
+    /// <param name="gem">The gem to be scaled</param>
+    /// <param name="finalScale">The final scale of the gem</param>
+    /// <param name="speed">Speed of the scaling</param>
+    /// <returns></returns>
     private IEnumerator ScaleGem(GameObject gem, Vector3 finalScale, float speed)
     {
-        //WorkingObjs++;
         Vector3 currentScale = gem.transform.localScale;
         for (float t = 0; t < 1f; t += Time.deltaTime * speed)
         {
             gem.transform.localScale = Vector3.Lerp(currentScale, finalScale, t);
             yield return new WaitForEndOfFrame();         
         }
-        //WorkingObjs--;
     }
-    
-    // Returns graphical position given x and y on the grid
+
+    /// <summary>
+    /// Returns the position of the cell of the grid with the given location
+    /// </summary>
+    /// <param name="x">X-pos on the grid</param>
+    /// <param name="y">Y-pos on the grid</param>
+    /// <returns>
+    /// Vector3 with position of the gem on the grid
+    /// </returns>
     private Vector3 GetGraphPos(int x, int y)
     {
         return new Vector3(

@@ -19,6 +19,12 @@ public class EditorUIUnit : MonoBehaviour {
 
     public Toggle randomizeColors;
     public Toggle spawnNewGems;
+    public Toggle energyToggle;
+    public Toggle meteorToggle;
+    public Toggle colorlessToggle;
+    public Toggle sameColorToggle;
+    public Toggle obstacleToggle;
+    public Toggle frozenToggle;
     [Space(10)]
 
     // Loading options
@@ -30,92 +36,135 @@ public class EditorUIUnit : MonoBehaviour {
     public Button decrBonus;
     public Button incrEnergy;
     public Button decrEnergy;
-    [Space(10)]
-
-    public GameObject preOptionsGroup;
-    public FadeSwitcher loadingGroup;
-    public FadeSwitcher saveGroup;
-    [Space(10)]
-
+    [Space(10)]    
+    
     public EditorParams pu;
-
+    
     private void Awake()
     {
-        randomizeColors.isOn = pu.randomizeColors;
-        spawnNewGems.isOn = pu.spawnNewGems;
-
-        // Because of the nature of Toggles we need to 
-        // update the values accordingly
-        pu.randomizeColors = randomizeColors.isOn;
-        pu.spawnNewGems = spawnNewGems.isOn;
+        CorrectToggles();
 
         incrBonus.interactable = pu.spawnNewGems;
         decrBonus.interactable = pu.spawnNewGems;
-        incrEnergy.interactable = pu.spawnNewGems;
-        decrEnergy.interactable = pu.spawnNewGems;
-        
-        //saveGroup.SwitchFade();
-        //loadingGroup.SwitchFade();
-
-        levelToLoadText.text = EditorParams.currentSlot.ToString();
-        levelToSaveText.text = EditorParams.currentSlot.ToString();
+        incrEnergy.interactable = pu.spawnNewGems && pu.spawnEnergy;
+        decrEnergy.interactable = pu.spawnNewGems && pu.spawnEnergy;              
     }
 
-    void Update () {
-
-        fpsText.text = "FPS: " + (1f / Time.deltaTime).ToString("0");
-        slotText.text = EditorParams.currentSlot == -1 ? 
-            "Temprorary slot"
+    private void Update () {
+        fpsText.text = LocalizationManager.instance.GetLocalizedValue("misc_fps_lable") + (1f / Time.deltaTime).ToString("0");
+        slotText.text = EditorParams.currentSlot == -1 ?
+            LocalizationManager.instance.GetLocalizedValue("editor_temp_slot_lable")
             :
-            "Slot " + EditorParams.currentSlot.ToString() + "/" + EditorParams.slotNumber.ToString();
+            LocalizationManager.instance.GetLocalizedValue("editor_slot_lable") + 
+            " " + EditorParams.currentSlot.ToString() + "/" + EditorParams.slotNumber.ToString() + 
+            (EditorParams.isSaved ? "" : "*");
 
-        xSizeText.text = "Grid width: " + pu.gridSize.x.ToString("0");
-        ySizeText.text = "Grid heigth: " + pu.gridSize.y.ToString("0");
-        availableColorsText.text = "Colors number: " + pu.colorsAvailable.ToString();
-        sequenceSizeText.text = "Sequence size: " + pu.sequenceSize.ToString();
-        bonusChanceText.text = "Bonus chance: " + pu.bonusesPercentage.ToString();
-        energyChanceText.text = "Energy chance: " + pu.energyPercentage.ToString();
-        maxEnergyText.text = "Maximum energy: " + pu.maximumEnergy.ToString();
+        xSizeText.text = pu.gridSize.x.ToString("0");
+        ySizeText.text = pu.gridSize.y.ToString("0");
+        availableColorsText.text = pu.colorsAvailable.ToString();
+        sequenceSizeText.text = pu.sequenceSize.ToString();
+        bonusChanceText.text = pu.bonusesPercentage.ToString() + "%";
+        energyChanceText.text = pu.energyPercentage.ToString() + "%";
+        maxEnergyText.text = pu.maximumEnergy.ToString();
 
-        levelToLoadText.text = EditorParams.currentSlot == -1 ? "none" : EditorParams.currentSlot.ToString();
-        levelToSaveText.text = levelToLoadText.text;
+        levelToLoadText.text = EditorParams.loadSlot.ToString();
+        levelToSaveText.text = EditorParams.saveSlot.ToString();        
     }
 
     public void SwitchColorRandomization()
     {
         pu.randomizeColors = !pu.randomizeColors;
     }
-
     public void SwitchNewGemsSpawn()
     {
         pu.spawnNewGems = !pu.spawnNewGems;
 
         incrBonus.interactable = pu.spawnNewGems;
         decrBonus.interactable = pu.spawnNewGems;
-        incrEnergy.interactable = pu.spawnNewGems;
-        decrEnergy.interactable = pu.spawnNewGems;              
+        incrEnergy.interactable = pu.spawnNewGems && pu.spawnEnergy;
+        decrEnergy.interactable = pu.spawnNewGems && pu.spawnEnergy;
+
+        energyToggle.interactable = pu.spawnNewGems;
+    }
+    public void SwitchSpawnEnergy()
+    {
+        pu.spawnEnergy = !pu.spawnEnergy;
+
+        incrEnergy.interactable = pu.spawnNewGems && pu.spawnEnergy;
+        decrEnergy.interactable = pu.spawnNewGems && pu.spawnEnergy;
+    }    
+    public void SwitchPermittedBonus(int bonusId)
+    {
+        bool wasPermitted = IsBonusPermitted(bonusId);
+
+        int[] newArray;
+
+        if (wasPermitted)
+        {
+            newArray = new int[pu.permittedBonuses.Length - 1];
+
+            int iter = 0;
+            foreach (int i in pu.permittedBonuses)
+            {
+                if (i != bonusId)
+                {
+                    newArray[iter] = i;
+                    iter++;
+                }                
+            }
+            pu.permittedBonuses = newArray;
+        } else
+        {
+            newArray = new int[pu.permittedBonuses.Length + 1];
+            pu.permittedBonuses.CopyTo(newArray, 0);
+            newArray[pu.permittedBonuses.Length] = bonusId;
+            pu.permittedBonuses = newArray;
+        }
     }
     
-    public void HidePreOptions()
+    public void CorrectToggles()
     {
-        preOptionsGroup.SetActive(false);
+        randomizeColors.isOn = pu.randomizeColors;
+        spawnNewGems.isOn = pu.spawnNewGems;
+        energyToggle.isOn = pu.spawnEnergy;
+
+        pu.randomizeColors = randomizeColors.isOn;
+        pu.spawnNewGems = spawnNewGems.isOn;
+        pu.spawnEnergy = energyToggle.isOn;
+
+        meteorToggle.isOn = IsBonusPermitted((int)ParamUnit.Bonus.METEOR);
+        colorlessToggle.isOn = IsBonusPermitted((int)ParamUnit.Bonus.COLORLESS);
+        sameColorToggle.isOn = IsBonusPermitted((int)ParamUnit.Bonus.SAME_COLOR);
+        obstacleToggle.isOn = IsBonusPermitted((int)ParamUnit.Bonus.OBSTACLE);
+        frozenToggle.isOn = IsBonusPermitted((int)ParamUnit.Bonus.ICE_1);
+        
+        if (meteorToggle.isOn != IsBonusPermitted((int)ParamUnit.Bonus.METEOR))
+            SwitchPermittedBonus((int)ParamUnit.Bonus.METEOR);
+        if (colorlessToggle.isOn != IsBonusPermitted((int)ParamUnit.Bonus.COLORLESS))
+            SwitchPermittedBonus((int)ParamUnit.Bonus.COLORLESS);
+        if (sameColorToggle.isOn != IsBonusPermitted((int)ParamUnit.Bonus.SAME_COLOR))
+            SwitchPermittedBonus((int)ParamUnit.Bonus.SAME_COLOR);
+        if (obstacleToggle.isOn != IsBonusPermitted((int)ParamUnit.Bonus.OBSTACLE))
+            SwitchPermittedBonus((int)ParamUnit.Bonus.OBSTACLE);
+        if (frozenToggle.isOn != IsBonusPermitted((int)ParamUnit.Bonus.ICE_1))
+        {
+            SwitchPermittedBonus((int)ParamUnit.Bonus.ICE_1);
+            SwitchPermittedBonus((int)ParamUnit.Bonus.ICE_2);
+            SwitchPermittedBonus((int)ParamUnit.Bonus.ICE_3);
+        }
     }
 
-    public void HideLoadingOptions()
+    private bool IsBonusPermitted(int bonusId)
     {
-        loadingGroup.gameObject.SetActive(false);
-    }
-    public void ShowLoadingOptions()
-    {
-        loadingGroup.gameObject.SetActive(true);
-    }
+        bool contains = false;
+        foreach (int i in pu.permittedBonuses)
+        {
+            if (i == bonusId)
+            {
+                contains = true;
+            }
+        }
+        return contains;
+    }    
 
-    public void HideSaveOptions()
-    {
-        saveGroup.gameObject.SetActive(false);
-    }
-    public void ShowSaveOptions()
-    {
-        saveGroup.gameObject.SetActive(true);
-    }
 }

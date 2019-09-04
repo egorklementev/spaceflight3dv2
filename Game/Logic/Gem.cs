@@ -1,4 +1,7 @@
-﻿public class Gem {
+﻿/// <summary>
+/// A class containing information about logical gem
+/// </summary>
+public class Gem {
     
     public int Color { get; set; }
     public int Bonus { get; set; }

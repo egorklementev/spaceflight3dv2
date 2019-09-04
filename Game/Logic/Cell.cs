@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// A class containing information about individual cell in the logical grid
+/// </summary>
 public class Cell {
 
     public Gem Gem { get; set; }

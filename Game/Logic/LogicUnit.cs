@@ -1,11 +1,12 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// A class performing all logic cheks, computations and actions in the game
+/// </summary>
 public class LogicUnit : MonoBehaviour {
     
-    [Header("Grid Instance")]
-    public Cell[,] grid;
-    [Space(10)]
-
+    public Cell[,] grid; // Logical state of the grid
+    
     [Header("Units' refs")]
     public GraphicsUnit gu;
     public InputUnit iu;
@@ -18,14 +19,14 @@ public class LogicUnit : MonoBehaviour {
     [HideInInspector]
     public bool readyToSwap = false;
     [HideInInspector]
-    public int suboptimalMoves;
+    public int suboptimalMoves; // Number of energy available
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
-    private int gSizeX;
-    private int gSizeY;
+    private int gSizeX; // Width of the grid
+    private int gSizeY; // Height of the grid
 
-    private bool needToCheck = false;
+    private bool needToCheck = false; // Whether or not unit should check the grid for empty cells or gems to be destroyed
     private bool bonusIsWorking = false;
 
     private bool initialSpawnHappened = false;
@@ -57,7 +58,7 @@ public class LogicUnit : MonoBehaviour {
                 CheckGemGrid();
                 FillGemGrid();
             }
-            if (suboptimalMoves == -1)
+            if (suboptimalMoves <= 0)
             {
                 gu.DrawEndScreen(false);
                 iu.SetGameOver(); // Disable input
@@ -65,6 +66,10 @@ public class LogicUnit : MonoBehaviour {
         }
 	}
     
+    /// <summary>
+    /// Returns randomly generated logical gem
+    /// </summary>
+    /// <returns></returns>
     public Gem GetRandomGem()
     {
         Gem gem = new Gem
@@ -77,10 +82,10 @@ public class LogicUnit : MonoBehaviour {
         {
             switch(gem.Bonus)
             {
-                case 2:
+                case (int)ParamUnit.Bonus.COLORLESS:
                     gem.Color = 8;
                     break;
-                case 4:
+                case (int)ParamUnit.Bonus.OBSTACLE:
                     gem.Color = 9;
                     break;
                 default:
@@ -95,19 +100,28 @@ public class LogicUnit : MonoBehaviour {
         return gem;
     }
 
+    /// <summary>
+    /// Destroys gem at the given location 
+    /// and performs actions according to its bonus 
+    /// </summary>
+    /// <param name="x">X-pos of the gem to be destroyed</param>
+    /// <param name="y">Y-pos of the gem to be destroyed</param>
     public void DestroyGem(int x, int y)
     {
-        if (grid[x, y].Gem.Bonus != -1)
+        bool needToDestroy = true;
+
+        if (grid[x, y].Gem.IsBonus())
         {
             switch (grid[x, y].Gem.Bonus)
             {
-                case 1:
-                    gu.ActivateBonus1(x, y);
+                case (int)ParamUnit.Bonus.METEOR:
+                    gu.ActivateMeteorBonus(x, y);
                     break;
-                case 3:
+                case (int)ParamUnit.Bonus.SAME_COLOR:
                     if (!bonusIsWorking)
                     {
                         bonusIsWorking = true;
+                        // Search for gems with the same color
                         int color = grid[x, y].Gem.Color;
                         for (int _x = 0; _x < gSizeX; _x++)
                         {
@@ -123,15 +137,37 @@ public class LogicUnit : MonoBehaviour {
                     }
                     bonusIsWorking = false;
                     break;
-                case 5:
+                case (int)ParamUnit.Bonus.ENERGY:
                     IncreaseSuboptimal();
+                    break;
+                case (int)ParamUnit.Bonus.ICE_1:
+                    needToDestroy = false;
+                    grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ICE_2;
+                    gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    break;
+                case (int)ParamUnit.Bonus.ICE_2:
+                    needToDestroy = false;
+                    grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ICE_3;
+                    gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    break;
+                case (int)ParamUnit.Bonus.ICE_3:
+                    needToDestroy = false;
+                    grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.NONE;
+                    gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
                     break;
             }            
         }
+
+        if (needToDestroy)
+        {
+            grid[x, y].Gem = null;
+        }
         needToCheck = true;
-        grid[x, y].Gem = null;
     }
 
+    /// <summary>
+    /// Checks for gems that should be destroyed and perform gravity of the gems
+    /// </summary>
     public void CheckGemGrid()
     {
         needToCheck = false;
@@ -145,224 +181,56 @@ public class LogicUnit : MonoBehaviour {
             }
         }
 
-        // From left to rigth
-        for (int y = 0; y < gSizeY; ++y)
+        // Check for destruction
+        #region From left to right
+        for (int y = 0; y < gSizeY; y++)
         {
-            int curX = 0;
-            int currentEqual = 1;
-            while (curX < (gSizeX - 1))
+            for (int x = 0; x <= gSizeX - pu.sequenceSize; x++)
             {
-                while (curX < (gSizeX - 1) && 
-                    !grid[curX, y].IsEmpty() && // No need to check empty cell
-                    !grid[curX + 1, y].IsEmpty() &&
-                    (grid[curX, y].Gem.Color == grid[curX + 1, y].Gem.Color))
+                int matchingGems = 0;
+                for (int cx1 = x; cx1 < x + pu.sequenceSize; cx1++)
                 {
-                    currentEqual++;
-                    curX++;
-                }
-                
-                if (currentEqual >= pu.sequenceSize)
-                {
-                    for (int x = curX - currentEqual + 1; x <= curX; ++x)
+                    for (int cx2 = x; cx2 < x + pu.sequenceSize; cx2++)
                     {
-                        needToDestroy[x, y] = true;
+                        if (!grid[cx1, y].IsEmpty() && !grid[cx2, y].IsEmpty() && 
+                            ColorsAreMatching(grid[cx1,y].Gem, grid[cx2, y].Gem))
+                        {
+                            matchingGems++;
+                        }
                     }
                 }
-
-                currentEqual = 1;
-                curX++;
+                if (matchingGems == pu.sequenceSize * pu.sequenceSize)
+                {
+                    for (int cx = x; cx < x + pu.sequenceSize; cx++)
+                    {
+                        needToDestroy[cx,y] = true;
+                    }
+                }
             }
         }
-
-        // From top to bottom
-        for (int x = 0; x < gSizeX; ++x)
+        #endregion
+        #region From bottom to top
+        for (int x = 0; x < gSizeX; x++)
         {
-            int curY = 0;
-            int currentEqual = 1;
-            while (curY < (gSizeY - 1))
+            for (int y = 0; y <= gSizeY - pu.sequenceSize; y++)
             {
-                while (curY < (gSizeY - 1) && 
-                    !grid[x, curY].IsEmpty() && // No need to check empty cell
-                    !grid[x, curY + 1].IsEmpty() &&
-                    (grid[x, curY].Gem.Color == grid[x, curY + 1].Gem.Color))
+                int matchingGems = 0;
+                for (int cy1 = y; cy1 < y + pu.sequenceSize; cy1++)
                 {
-                    currentEqual++;
-                    curY++;
-                }
-                
-                if (currentEqual >= pu.sequenceSize)
-                {
-                    for (int y = curY - currentEqual + 1; y <= curY; ++y)
+                    for (int cy2 = y; cy2 < y + pu.sequenceSize; cy2++)
                     {
-                        needToDestroy[x, y] = true;
+                        if (!grid[x, cy1].IsEmpty() && !grid[x, cy2].IsEmpty() && 
+                            ColorsAreMatching(grid[x, cy1].Gem, grid[x, cy2].Gem))
+                        {
+                            matchingGems++;
+                        }
                     }
                 }
-
-                currentEqual = 1;
-                curY++;
-            }
-        }
-
-        #region Colorless gems
-        for (int x = 0; x < gSizeX; ++x)
-        {
-            for (int y = 0; y < gSizeY; y++)
-            {
-                if (!grid[x, y].IsEmpty() && 
-                    grid[x, y].Gem.Bonus == 2)
+                if (matchingGems == pu.sequenceSize * pu.sequenceSize)
                 {
-                    // Count equal ones to the left
-                    int curX = x - 1;
-                    int equalLeft = 1;
-                    if (curX < 0)
+                    for (int cy = y; cy < y + pu.sequenceSize; cy++)
                     {
-                        equalLeft = 0;
-                    } else
-                    {
-                        while (curX > 0 &&
-                        !grid[curX, y].IsEmpty() &&
-                        !grid[curX - 1, y].IsEmpty() &&
-                        (grid[curX, y].Gem.Bonus == 2 || 
-                        grid[curX, y].Gem.Color == grid[curX - 1, y].Gem.Color))
-                        {
-                            equalLeft++;
-                            curX--;
-                        }
-                    }
-
-                    // Count equal ones to the right
-                    curX = x + 1;
-                    int equalRight = 1;
-                    if (curX >= gSizeX)
-                    {
-                        equalRight = 0;
-                    }
-                    else
-                    {
-                        while (curX < (gSizeX - 1) &&
-                        !grid[curX, y].IsEmpty() &&
-                        !grid[curX + 1, y].IsEmpty() &&
-                        (grid[curX, y].Gem.Bonus == 2 || 
-                        grid[curX, y].Gem.Color == grid[curX + 1, y].Gem.Color))
-                        {
-                            equalRight++;
-                            curX++;
-                        }
-                    }
-
-                    // If sufficient - destroy
-                    if (equalLeft != 0 && 
-                        equalRight != 0 &&
-                        x - 1 >= 0 &&
-                        x + 1 < gSizeX &&
-                        !grid[x - 1, y].IsEmpty() &&
-                        !grid[x + 1, y].IsEmpty() &&
-                        grid[x - 1, y].Gem.Color == grid[x + 1, y].Gem.Color &&
-                        equalLeft + equalRight + 1 >= pu.sequenceSize)
-                    {
-                        // Left
-                        for (int i = x; i >= x - equalLeft; i--)
-                        {
-                            needToDestroy[i, y] = true;
-                        }
-                        // Right
-                        for (int i = x; i <= x + equalRight; i++)
-                        {
-                            needToDestroy[i, y] = true;
-                        }
-                    }
-                    if (equalLeft != 0 &&                        
-                        equalLeft + 1 >= pu.sequenceSize)
-                    {
-                        for (int i = x; i >= x - equalLeft; i--)
-                        {
-                            needToDestroy[i, y] = true;
-                        }
-                    }
-                    if (equalRight != 0 &&
-                        equalRight + 1 >= pu.sequenceSize)
-                    {
-                        for (int i = x; i <= x + equalRight; i++)
-                        {
-                            needToDestroy[i, y] = true;
-                        }
-                    }
-
-                    // Count equal ones to the top
-                    int curY = y + 1;
-                    int equalTop = 1;
-                    if (curY >= gSizeY)
-                    {
-                        equalTop = 0;
-                    }
-                    else
-                    {
-                        while (curY < (gSizeY - 1) &&
-                        !grid[x, curY].IsEmpty() &&
-                        !grid[x, curY + 1].IsEmpty() &&
-                        (grid[x, curY].Gem.Bonus == 2 || grid[x, curY].Gem.Color == grid[x, curY + 1].Gem.Color))
-                        {
-                            equalTop++;
-                            curY++;
-                        }
-                    }
-
-                    // Count equal ones to the bottom
-                    curY = y - 1;
-                    int equalBottom = 1;
-                    if (curY < 0)
-                    {
-                        equalBottom = 0;
-                    }
-                    else
-                    {
-                        while (curY > 0 &&
-                        !grid[x, curY].IsEmpty() &&
-                        !grid[x, curY - 1].IsEmpty() &&
-                        (grid[x, curY].Gem.Bonus == 2 || 
-                        grid[x, curY].Gem.Color == grid[x, curY - 1].Gem.Color))
-                        {
-                            equalBottom++;
-                            curY--;
-                        }
-                    }
-
-                    // If sufficient - destroy
-                    if (equalBottom != 0 &&
-                        equalTop != 0 &&
-                        y - 1 >= 0 && 
-                        y + 1 < gSizeY &&
-                        !grid[x, y - 1].IsEmpty() &&
-                        !grid[x, y + 1].IsEmpty() &&
-                        grid[x, y - 1].Gem.Color == grid[x, y + 1].Gem.Color &&
-                        equalBottom + equalTop + 1 >= pu.sequenceSize)
-                    {
-                        // Bottom
-                        for (int i = y; i >= y - equalBottom; i--)
-                        {
-                            needToDestroy[x, i] = true;
-                        }
-                        // Right
-                        for (int i = y; i <= y + equalTop; i++)
-                        {
-                            needToDestroy[x, i] = true;
-                        }
-                    }
-                    if (equalBottom != 0 &&
-                        equalBottom + 1 >= pu.sequenceSize)
-                    {
-                        for (int i = y; i >= y - equalBottom; i--)
-                        {
-                            needToDestroy[x, i] = true;
-                        }
-                    }
-                    if (equalTop != 0 &&
-                        equalTop + 1 >= pu.sequenceSize)
-                    {
-                        for (int i = y; i <= y + equalTop; i++)
-                        {
-                            needToDestroy[x, i] = true;
-                        }
+                        needToDestroy[x, cy] = true;
                     }
                 }
             }
@@ -377,7 +245,7 @@ public class LogicUnit : MonoBehaviour {
             {
                 if (!grid[x, y].IsEmpty() && 
                     needToDestroy[x, y] &&
-                    grid[x, y].Gem.Bonus != 4) // Undestroyable gem
+                    grid[x, y].Gem.Bonus != (int)ParamUnit.Bonus.OBSTACLE) 
                 {
                     wasDestroyed = true;
                     gu.DestroyGem(x, y, grid[x, y].Gem.Color);
@@ -392,7 +260,7 @@ public class LogicUnit : MonoBehaviour {
         }
         iu.wasSwap = false;
 
-        // Gravity
+        #region Gravity
         for (int x = 0; x < gSizeX; ++x)
         {
             for (int y = 0; y < gSizeY; y++)
@@ -415,25 +283,15 @@ public class LogicUnit : MonoBehaviour {
                     break;
                 }
             }
-        }        
-    }
-
-    private void IncreaseSuboptimal()
-    {
-        if (suboptimalMoves < pu.maximumEnergy)
-        {
-            gu.SwitchEnergy(suboptimalMoves);
-            suboptimalMoves++;
         }
-    }
+        #endregion
+    }    
 
-    private void DecreaseSubpotimal()
-    {
-        suboptimalMoves--;
-        if (suboptimalMoves >= 0)
-            gu.SwitchEnergy(suboptimalMoves);
-    }
-
+    /// <summary>
+    /// Swaps gems with the given positions on the grid
+    /// </summary>
+    /// <param name="pos1">The position of the first gem on the grid</param>
+    /// <param name="pos2">The position of the second gem on the grid</param>
     public void SwapGems(Vector2 pos1, Vector2 pos2)
     {
         Gem temp = grid[(int)pos1.x, (int)pos1.y].Gem;
@@ -442,8 +300,13 @@ public class LogicUnit : MonoBehaviour {
         needToCheck = true;
     }
 
-    // Checks if it is valid to select the gem or not
-    public bool IsGemValid(int x, int y)
+    /// <summary>
+    /// Check whether the gem with the given location is correct to be selected by user
+    /// </summary>
+    /// <param name="x">X-pos of the gem</param>
+    /// <param name="y">Y-pos of the gem</param>
+    /// <returns></returns>
+    public bool IsGemValidToSelect(int x, int y)
     {
         if (gemSO == UNSELECTED)
         {
@@ -459,7 +322,9 @@ public class LogicUnit : MonoBehaviour {
         }
     }
 
-    // Checks for empty cells and fill it with the random gems
+    /// <summary>
+    /// Checks for empty cells and fills it with the random gems
+    /// </summary>
     public void FillGemGrid()
     {
         if (pu.spawnNewGems)
@@ -494,8 +359,11 @@ public class LogicUnit : MonoBehaviour {
             }
         }
     }
-    
-    // Fills the grid with the given grid preset
+
+    /// <summary>
+    /// Fills the grid with the given grid preset
+    /// </summary>
+    /// <param name="givenGrid">The grid to be filled in</param>
     public void FillGemGrid(Cell[,] givenGrid)
     {
         for (int x = 0; x < gSizeX; x++)
@@ -508,13 +376,18 @@ public class LogicUnit : MonoBehaviour {
         }
     }    
 
+    /// <summary>
+    /// Updates some data after loading of the saved level
+    /// </summary>
     public void UpdateDataAfterLoading()
     {
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;        
     }
 
-    // If less than two gems were selected
+    /// <summary>
+    /// Resets the selected gems if less than two gems were selected
+    /// </summary>
     public void ResetSelection()
     {
         gemSO = UNSELECTED;
@@ -525,15 +398,42 @@ public class LogicUnit : MonoBehaviour {
     {
         return gemSO != UNSELECTED && gemST != UNSELECTED;
     }
-
     public bool OneSelected()
     {
         return gemSO != UNSELECTED && gemST == UNSELECTED;
     }
-
     public bool NoOneSelected()
     {
         return gemSO == UNSELECTED && gemST == UNSELECTED;
     }
-    
+
+    private void IncreaseSuboptimal()
+    {
+        if (suboptimalMoves < pu.maximumEnergy)
+        {
+            gu.SwitchEnergy(suboptimalMoves);
+            suboptimalMoves++;
+        }
+    }
+    private void DecreaseSubpotimal()
+    {
+        suboptimalMoves--;
+        if (suboptimalMoves >= 0)
+            gu.SwitchEnergy(suboptimalMoves);
+    }
+
+    private bool ColorsAreMatching(Gem g1, Gem g2)
+    {
+        return 
+            (
+            g1.Color == g2.Color || 
+            g1.Bonus == (int)ParamUnit.Bonus.COLORLESS || 
+            g2.Bonus == (int)ParamUnit.Bonus.COLORLESS
+            ) 
+            &&
+            (
+            g1.Bonus != (int)ParamUnit.Bonus.OBSTACLE &&
+            g2.Bonus != (int)ParamUnit.Bonus.OBSTACLE
+            );
+    }
 }

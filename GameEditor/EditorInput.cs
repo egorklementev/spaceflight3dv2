@@ -9,9 +9,7 @@ public class EditorInput : MonoBehaviour
     public EditorParams pu;
 
     [HideInInspector]
-    public bool wasSwap = false;    
-
-    private void Start() { }
+    public bool wasSwap = false;        
 
     private void Update()
     {
@@ -48,39 +46,37 @@ public class EditorInput : MonoBehaviour
             }
 
         }
-        if (Input.GetMouseButton(0))
+        if (!gu.IsWorking())
         {
-            RaycastHit hitInfo = new RaycastHit();
-            bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
-            if (hit)
+            if (Input.GetMouseButton(0))
             {
-                if ((!lu.coloringMode && !lu.bonusingMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
+                RaycastHit hitInfo = new RaycastHit();
+                bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hitInfo);
+                if (hit)
                 {
-                    gu.SelectGem(hitInfo.transform.gameObject);
-                }
-                else if ((lu.coloringMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
-                {
-                    gu.ColorGem(hitInfo.transform.gameObject);
-                }
-                else if ((lu.bonusingMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Unbreakable"))
-                {
-                    gu.BonusGem(hitInfo.transform.gameObject);
+                    if ((!lu.coloringMode && !lu.bonusingMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Untouchable"))
+                    {
+                        gu.SelectGem(hitInfo.transform.gameObject);
+                    }
+                    else if ((lu.coloringMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Untouchable"))
+                    {
+                        gu.ColorGem(hitInfo.transform.gameObject);
+                    }
+                    else if ((lu.bonusingMode) && (hitInfo.transform.gameObject.tag == "Gem" || hitInfo.transform.gameObject.tag == "Untouchable"))
+                    {
+                        gu.BonusGem(hitInfo.transform.gameObject);
+                    }
                 }
             }
-        }
-        else
-        {
-            if (lu.OneSelected())
+            else
             {
-                gu.ResetSelection();
-                lu.ResetSelection();
+                if (lu.OneSelected())
+                {
+                    gu.ResetSelection();
+                    lu.ResetSelection();
+                }
             }
-        }
-
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            Application.Quit();
-        }
+        }        
     }    
 
 }
