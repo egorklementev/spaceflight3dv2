@@ -1,5 +1,7 @@
-﻿using UnityEngine;
-
+﻿/// <summary>
+/// Serializable class that contains information about individual level
+/// with all gems and bonuses and parameters of the level
+/// </summary>
 [System.Serializable]
 public class LevelData {
 
@@ -9,13 +11,14 @@ public class LevelData {
     public int[] gemColors;
     public int[] gemBonuses;
 
-    public int availableColors;
+    public int[] colorVector;
     public int[] availableBonuses;
 
     public int sequenceSize;
     public int maximumEnergy;
 
     public bool spawnNewGems;
+    public bool spawnEnergy;
     public bool randomizeColors;
 
     public int bonusPercentage;
@@ -44,14 +47,14 @@ public class LevelData {
             }
         }    
 
-        availableColors = pu.colorsAvailable;
-        availableBonuses = new int[pu.permittedBonuses.Length];
-        pu.permittedBonuses.CopyTo(availableBonuses, 0);
+        colorVector = pu.colorVector;
+        availableBonuses = pu.permittedBonuses;
 
         sequenceSize = pu.sequenceSize;
         maximumEnergy = pu.maximumEnergy;
 
         spawnNewGems = pu.spawnNewGems;
+        spawnEnergy = pu.spawnEnergy;
         randomizeColors = pu.randomizeColors;
 
         bonusPercentage = pu.bonusesPercentage;

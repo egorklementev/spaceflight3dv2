@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// A class listening to the user input and transmitting it to the other units
+/// </summary>
 public class InputUnit : MonoBehaviour {
 
     [Header("Units' refs")]
@@ -10,9 +13,7 @@ public class InputUnit : MonoBehaviour {
     [HideInInspector]
     public bool wasSwap = false;
 
-    private bool isGameOver = false;
-    
-    private void Start() {}
+    private bool isGameOver = false; // Local variable to make sure that no input can be processed after game is over   
     
     private void Update()
     {

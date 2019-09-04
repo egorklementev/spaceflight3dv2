@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
 
+/// <summary>
+/// Performs scaling of the object from its initial scale (localScale) 
+/// to the specified scale (multiplier * localScale) with the given speed
+/// </summary>
 public class Scale : MonoBehaviour {
 
     [Header("Parameters")]
@@ -8,6 +12,10 @@ public class Scale : MonoBehaviour {
 
     private Vector3 localScale;
 
+    /// <summary>
+    /// Sets local scale of the object to be scaled
+    /// </summary>
+    /// <param name="lscale"></param>
     public void SetLocalScale(Vector3 lscale)
     {
         localScale = lscale;

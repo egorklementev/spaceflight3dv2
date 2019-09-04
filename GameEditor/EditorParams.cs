@@ -21,6 +21,7 @@ public class EditorParams : MonoBehaviour
     public bool randomizeColors = false;
     public int maximumEnergy = 3;
     public bool spawnNewGems = true;
+    public bool spawnEnergy = true;
     [Space(10)]
 
     [Header("Bonus params")]
@@ -34,16 +35,59 @@ public class EditorParams : MonoBehaviour
     [Header("Units' refs")]
     public EditorGraphics gu;
     public EditorLogic lu;
+    public FadeManager fm;
+    [Space(10)]
+
+    [Header("Pop-up message")]
+    public MessageText mt;
+    [Space(10)]
+
+    public Camera mainCamera;
 
     [HideInInspector]
     public float gemOffset;
     [HideInInspector]
     public float gemSize;
     [HideInInspector]
-    public int[] colorVector;    
+    public int[] colorVector;
+    [HideInInspector]
+    public string[] colorNames;
+    [HideInInspector]
+    public string[] bonusNames;
 
     public const int slotNumber = 8;
     public static int currentSlot = -1;
+    public static int loadSlot = 1;
+    public static int saveSlot = 1;
+    public static bool isSaved = false;
+
+    private bool firstTimeLaunched = true;
+
+    private void Awake()
+    {
+        colorNames = new string[10];
+        colorNames[0] = LocalizationManager.instance.GetLocalizedValue("editor_color_blue");
+        colorNames[1] = LocalizationManager.instance.GetLocalizedValue("editor_color_green");
+        colorNames[2] = LocalizationManager.instance.GetLocalizedValue("editor_color_magenta");
+        colorNames[3] = LocalizationManager.instance.GetLocalizedValue("editor_color_orange");
+        colorNames[4] = LocalizationManager.instance.GetLocalizedValue("editor_color_red");
+        colorNames[5] = LocalizationManager.instance.GetLocalizedValue("editor_color_diamond");
+        colorNames[6] = LocalizationManager.instance.GetLocalizedValue("editor_color_white");
+        colorNames[7] = LocalizationManager.instance.GetLocalizedValue("editor_color_yellow");
+        colorNames[8] = LocalizationManager.instance.GetLocalizedValue("editor_color_gray");
+        colorNames[9] = LocalizationManager.instance.GetLocalizedValue("editor_color_white");
+
+        bonusNames = new string[9];
+        bonusNames[0] = LocalizationManager.instance.GetLocalizedValue("editor_deselector");
+        bonusNames[1] = LocalizationManager.instance.GetLocalizedValue("editor_energy_bonus");
+        bonusNames[2] = LocalizationManager.instance.GetLocalizedValue("editor_meteor_bonus");
+        bonusNames[3] = LocalizationManager.instance.GetLocalizedValue("editor_colorless_bonus");
+        bonusNames[4] = LocalizationManager.instance.GetLocalizedValue("editor_same_color_bonus");
+        bonusNames[5] = LocalizationManager.instance.GetLocalizedValue("editor_obstacle_bonus");
+        bonusNames[6] = LocalizationManager.instance.GetLocalizedValue("editor_ice_1");
+        bonusNames[7] = LocalizationManager.instance.GetLocalizedValue("editor_ice_2");
+        bonusNames[8] = LocalizationManager.instance.GetLocalizedValue("editor_ice_3");
+    }
 
     public void InitializeOnStart()
     {
@@ -72,9 +116,16 @@ public class EditorParams : MonoBehaviour
         ComputeGemSizes();
 
         currentSlot = -1;
-
-        gu.gameObject.SetActive(true);
+        
+        gu.gameObject.SetActive(true);       
         lu.gameObject.SetActive(true);
+
+        if (!firstTimeLaunched)
+        {
+            UpdateGUandLU();
+        }
+
+        firstTimeLaunched = false;
     }
 
     public int GetRandomColor()
@@ -82,22 +133,18 @@ public class EditorParams : MonoBehaviour
         return colorVector[Random.Range(0, colorsAvailable)];
     }
 
-    // Bonus 1 - meteor
-    // Bonus 2 - colorless
-    // Bonus 3 - same color
-    // Bonus 4 - obstacle
-    // Bonus 5 - energy - not to be included to permitted bonuses
     public int GetRandomBonus()
     {
         int bonus = -1;
 
         int random = Random.Range(0, 100);
 
-        bonus = random < bonusesPercentage ?
-            permittedBonuses[Random.Range(0, permittedBonuses.Length)] : -1;
+        if (permittedBonuses.Length > 0)
+            bonus = random < bonusesPercentage ?
+                permittedBonuses[Random.Range(0, permittedBonuses.Length)] : -1;
 
-        bonus = (random > bonusesPercentage &&
-            random < bonusesPercentage + energyPercentage) ? 5 : bonus; // Energy or leave unchanged
+        bonus = spawnEnergy && (random > bonusesPercentage &&
+            random < bonusesPercentage + energyPercentage) ? (int) ParamUnit.Bonus.ENERGY : bonus; // Energy or leave unchanged
 
         return bonus;
     }
@@ -106,12 +153,12 @@ public class EditorParams : MonoBehaviour
     private void ComputeGemSizes()
     {
         // Size of the gems sides
-        float pixelsInUnit = Screen.height / 10f; // Size of the camera is 5
+        float height = 2f * mainCamera.orthographicSize;
+        float width = height * mainCamera.aspect;
         gemSize = Mathf.Min(
-            screenBound.x * Screen.width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
-            screenBound.y * Screen.height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)
+            screenBound.x * width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
+            screenBound.y * height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)
             );
-        gemSize /= pixelsInUnit;
         gemOffset = gemOffsetParam * gemSize;
         
     }
@@ -120,19 +167,42 @@ public class EditorParams : MonoBehaviour
     // Uses 'currentSlot' variable to identify the file in which to save
     public void SaveLevel()
     {
+        SaveLevel(false);
+    }
+    public void SaveLevel(bool toTheTemporarySlot)
+    {
+        if (!toTheTemporarySlot)
+        {
+            currentSlot = saveSlot;
+        }
+        else
+        {
+            currentSlot = 0;
+        }
         SaveUnit.SaveLevel(this, lu, currentSlot);
+
+        string levelSaved = LocalizationManager.instance.GetLocalizedValue("editor_level_saved");
+        mt.DisplayMessage(levelSaved + " " + currentSlot.ToString() + "!", 2.5f);
+
+        isSaved = true;
     }
 
     // Loads previously saved state of the game and replaces current one
     // Uses 'currentSlot' variable to identify the file from which to load
     public void LoadLevel()
     {
+        currentSlot = loadSlot;
+        saveSlot = loadSlot;
+
         LevelData ld = SaveUnit.LoadLevel(currentSlot);
 
         if (ld == null)
         {
-            SaveLevel();
-        } else
+            string slot = LocalizationManager.instance.GetLocalizedValue("editor_slot_lable");
+            string empty = LocalizationManager.instance.GetLocalizedValue("editor_empty_slot");
+            mt.DisplayMessage(slot + " " + currentSlot.ToString() + " " + empty + "!", 2.0f);
+        }
+        else
         {
             for (int x = 0; x < gridSize.x; x++)
             {
@@ -145,44 +215,25 @@ public class EditorParams : MonoBehaviour
                 }
             }
 
-            colorsAvailable = ld.availableColors;
-            ld.availableBonuses.CopyTo(permittedBonuses, 0);
+            colorsAvailable = ld.colorVector.Length;
+            permittedBonuses = ld.availableBonuses;
 
             sequenceSize = ld.sequenceSize;
             maximumEnergy = ld.maximumEnergy;
 
             spawnNewGems = ld.spawnNewGems;
+            spawnEnergy = ld.spawnEnergy;
             randomizeColors = ld.randomizeColors;
 
-            #region Color vector for gem colors
-            if (randomizeColors)
-            {
-                colorVector = new int[colorsAvailable];
-                List<int> list = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
-                for (int i = 0; i < colorsAvailable; i++)
-                {
-                    int index = Random.Range(0, list.Count);
-                    colorVector[i] = list[index];
-                    list.RemoveAt(index);
-                }
-            }
-            else
-            {
-                colorVector = new int[colorsAvailable];
-                for (int i = 0; i < colorsAvailable; i++)
-                {
-                    colorVector[i] = i;
-                }
-            }
-            #endregion
+            colorVector = ld.colorVector;
 
             gridSize.x = ld.gridSizeX;
             gridSize.y = ld.gridSizeY;
 
             ComputeGemSizes();
 
-            gu.UpdateDataAfterLoading();
             lu.UpdateDataAfterLoading();
+            gu.UpdateDataAfterLoading();
 
             gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
 
@@ -210,7 +261,9 @@ public class EditorParams : MonoBehaviour
                     }
                 }
             }
-        }        
+        }
+
+        isSaved = true;
     }
 
     // Tells ParamsUnit to load level containing in 'currentSlot' variable
@@ -219,7 +272,7 @@ public class EditorParams : MonoBehaviour
         if (currentSlot == -1)
         {
             currentSlot = 0;
-            SaveLevel();
+            SaveLevel(true);
             ParamUnit.slotToLoad = 0;
         } else
         {
@@ -244,21 +297,23 @@ public class EditorParams : MonoBehaviour
 
     public void IncreaseGridSizeX()
     {
-        gridSize.x += 1f;
+        if (IsSizeValueValid(gridSize.x + 1f, gridSize.y))
+            gridSize.x += 1f;
     }
     public void DecreaseGridSizeX()
     {   
-        if (gridSize.x > 1f)
+        if (gridSize.x > 1f && IsSizeValueValid(gridSize.x - 1f, gridSize.y))
             gridSize.x -= 1f;
     }
 
     public void IncreaseGridSizeY()
     {
-        gridSize.y += 1f;
+        if (IsSizeValueValid(gridSize.x, gridSize.y + 1f))
+            gridSize.y += 1f;
     }
     public void DecreaseGridSizeY()
     {
-        if (gridSize.y > 1f)
+        if (gridSize.y > 1f && IsSizeValueValid(gridSize.x, gridSize.y - 1f))
             gridSize.y -= 1f;
     }
 
@@ -315,25 +370,89 @@ public class EditorParams : MonoBehaviour
     }
     public void DecreaseMaxEnergy()
     {
-        if (maximumEnergy > 0)
+        if (maximumEnergy > 1)
         {
             maximumEnergy--;
         }
     }
 
-    public void IncreaseSlot()
+    public void IncreaseLoadSlot()
     {
-        if (currentSlot < slotNumber)
-            currentSlot++;
+        if (loadSlot < slotNumber)
+            loadSlot++;
     }
-    public void DecreaseSlot()
+    public void DecreaseLoadSlot()
     {
-        if (currentSlot > 1)
-            currentSlot--;
+        if (loadSlot > 1)
+            loadSlot--;
     }
-    public void InitializeSlot()
+
+    public void IncreaseSaveSlot()
     {
-        currentSlot = 1;
+        if (saveSlot < slotNumber)
+            saveSlot++;
     }
-    
+    public void DecreaseSaveSlot()
+    {
+        if (saveSlot > 1)
+            saveSlot--;
+    }
+
+    private bool IsSizeValueValid(float width, float height)
+    {
+        return 
+            width < 16f && 
+            height < 16f && 
+            (width / height) <= (2f) && 
+            (width / height) >= (2f / 3f) && 
+            (width * height) <= 100f &&
+            (width * height) >= 20f;
+    }
+
+    // Check with the purpose of not showing save group every time
+    public void UILevelSave()
+    {
+        if (currentSlot == -1)
+        {
+            fm.ShowGroup("Panel group");
+            fm.ShowGroup("Save group");
+        }
+        else
+        {
+            SaveLevel();
+        }
+    }
+
+    // For the purpose of loading level from the start
+    public void UILevelLoad()
+    {
+        InitializeOnStart();
+        LoadLevel();
+    }
+
+    private void UpdateGUandLU()
+    {
+        for (int x = 0; x < lu.grid.GetLength(0); x++)
+        {
+            for (int y = 0; y < lu.grid.GetLength(1); y++)
+            {               
+                gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+            }
+        }
+
+        lu.UpdateDataAfterLoading();
+        gu.UpdateDataAfterLoading();
+
+        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+
+        lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
+        for (int x = 0; x < (int)gridSize.x; x++)
+        {
+            for (int y = 0; y < (int)gridSize.y; y++)
+            {
+                lu.grid[x, y] = new Cell(new Vector2(x, y));                        
+            }
+        }
+        lu.FillGemGrid();
+    }
 }

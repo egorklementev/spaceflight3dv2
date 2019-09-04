@@ -3,6 +3,8 @@ using System.Collections;
 
 public class BonusSelection : MonoBehaviour {
 
+    public MessageText mt;
+    public EditorParams pu;
     public GameObject[] bonusMeshes;
     public float scaleSpeed = 1f;
 
@@ -14,53 +16,54 @@ public class BonusSelection : MonoBehaviour {
     public bool isProcessing = false;
 
     private float normalScale;
+    private readonly float boundParam = 0.7f;    
 
-    public void CreatePanel(float gemSize, int[] bonuses)
+    public void CreatePanel(int[] bonuses, GameObject anchor)
     {
-        bonusGrid = new GameObject[bonuses.Length];
+        bonusGrid = new GameObject[bonuses.Length + 2];
 
-        float param = 1.3f;
-        transform.localScale *= 45f * param;
-        int iter = 0;
+        anchor.transform.position = transform.position;
+
+        float height = 2f * pu.mainCamera.orthographicSize;
+        float width = height * pu.mainCamera.aspect;
+        float gemSize = Mathf.Min(
+            boundParam * height / (bonusGrid.Length + bonusGrid.Length * 0.2f),
+            0.065f * width);
+        
+        for (int i = 0; i < 2; i++)
+        {
+            Vector3 pos = anchor.transform.position;
+            pos.y += i * 1.25f * gemSize;
+
+            bonusGrid[i] = Instantiate(bonusMeshes[i], anchor.transform);
+            bonusGrid[i].transform.localScale = new Vector3(gemSize, gemSize, gemSize);
+            bonusGrid[i].transform.position = pos;
+        }
+
+        int iter = 2;
         foreach (int i in bonuses)
         {
-            Vector3 position = transform.position;
-            position.y += iter * 1.25f * gemSize * param;
+            Vector3 position = anchor.transform.position;
+            position.y += iter * 1.25f * gemSize;
 
-            bonusGrid[iter] = Instantiate(bonusMeshes[i - 1], transform);
+            bonusGrid[iter] = Instantiate(bonusMeshes[i], anchor.transform);
             bonusGrid[iter].transform.localScale = new Vector3(gemSize, gemSize, gemSize);            
             bonusGrid[iter].transform.position = position;
 
             iter++;
         }
-
+        
         normalScale = gemSize;
     }
 
-    public void ReCreatePanel(float gemSize, int[] bonuses)
+    public void ReCreatePanel(int[] bonuses, GameObject anchor)
     {
         foreach (GameObject obj in bonusGrid)
         {
             Destroy(obj);
         }
 
-        bonusGrid = new GameObject[bonuses.Length];
-        
-        int iter = 0;
-        foreach (int i in bonuses)
-        {
-            Vector3 position = transform.position;
-            position.y += iter * 1.25f * gemSize;
-
-            bonusGrid[iter] = Instantiate(bonusMeshes[i], transform);
-            bonusGrid[iter].transform.localScale = new Vector3(gemSize, gemSize, gemSize);
-            bonusGrid[iter].GetComponent<Renderer>().material.color = EditorGraphics.colors[i];
-            bonusGrid[iter].transform.position = position;
-
-            iter++;
-        }
-
-        normalScale = .5f * gemSize;
+        CreatePanel(bonuses, anchor);
     }
 
     public void SelectBonus(int i)
@@ -69,18 +72,44 @@ public class BonusSelection : MonoBehaviour {
         {
             StartCoroutine(ScaleGem(bonusGrid[i], new Vector3(1.25f * normalScale, 1.25f * normalScale, 1.25f * normalScale), scaleSpeed));
             currentSelected = i;
-        } else if (i != currentSelected)
+            switch(i)
+            {
+                case 0:
+                    mt.DisplayMessage(pu.bonusNames[0], MessageText.ScreenPosition.TOP);
+                    break;
+                case 1:
+                    mt.DisplayMessage(pu.bonusNames[1], MessageText.ScreenPosition.TOP);
+                    break;
+                default:
+                    mt.DisplayMessage(pu.bonusNames[pu.permittedBonuses[i - 2]], MessageText.ScreenPosition.TOP);
+                    break;
+            }
+            
+        }
+        else if (i != currentSelected)
         {
             StartCoroutine(ScaleGem(bonusGrid[currentSelected], new Vector3(normalScale, normalScale, normalScale), scaleSpeed));
             StartCoroutine(ScaleGem(bonusGrid[i], new Vector3(1.25f * normalScale, 1.25f * normalScale, 1.25f * normalScale), scaleSpeed));
             currentSelected = i;
+            switch (i)
+            {
+                case 0:
+                    mt.DisplayMessage(pu.bonusNames[0], MessageText.ScreenPosition.TOP);
+                    break;
+                case 1:
+                    mt.DisplayMessage(pu.bonusNames[1], MessageText.ScreenPosition.TOP);
+                    break;
+                default:
+                    mt.DisplayMessage(pu.bonusNames[pu.permittedBonuses[i - 2]], MessageText.ScreenPosition.TOP);
+                    break;
+            }
         } else
         {
             StartCoroutine(ScaleGem(bonusGrid[currentSelected], new Vector3(normalScale, normalScale, normalScale), scaleSpeed));
             currentSelected = -1;
         }
     }
-
+    
     private IEnumerator ScaleGem(GameObject gem, Vector3 finalScale, float speed)
     {
         isProcessing = true;

@@ -1,6 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
+/// <summary>
+/// A class containing all parameters of the level
+/// </summary>
 public class ParamUnit : MonoBehaviour {
 
     [Header("Grid params")]
@@ -21,6 +24,7 @@ public class ParamUnit : MonoBehaviour {
     public bool randomizeColors = false;
     public int maximumEnergy = 3;
     public bool spawnNewGems = true;
+    public bool spawnEnergy = true;
     [Space(10)]
 
     [Header("Bonus params")]
@@ -28,7 +32,9 @@ public class ParamUnit : MonoBehaviour {
     public int bonusesPercentage = 5;
     [Range(0, 25)]
     public int energyPercentage = 5;
+    [Space(10)]
     public int[] permittedBonuses;
+    [Space(10)]
     public float meteorMoveSpeed = 1f;
     public float meteorOffset = 10f;
     [Space(10)]
@@ -37,6 +43,8 @@ public class ParamUnit : MonoBehaviour {
     public GraphicsUnit gu;
     public LogicUnit lu;
 
+    public Camera mainCamera;
+
     [HideInInspector]
     public float gemOffset;
     [HideInInspector]
@@ -44,8 +52,22 @@ public class ParamUnit : MonoBehaviour {
 
     public static int slotToLoad = -1;
 
-    private int[] colorVector;
+    public enum Bonus
+    {
+        NONE = -1,
+        DESELECTOR = 0,
+        ENERGY = 1,
+        METEOR = 2,
+        COLORLESS = 3,
+        SAME_COLOR = 4,
+        OBSTACLE = 5,
+        ICE_1 = 6,
+        ICE_2 = 7,
+        ICE_3 = 8
+    }
 
+    private int[] colorVector;
+    
     private void Start()
     {
         #region Color vector for gem colors
@@ -80,46 +102,56 @@ public class ParamUnit : MonoBehaviour {
         }
     }
         
+    /// <summary>
+    /// Returns random color from the allowed color list
+    /// </summary>
+    /// <returns></returns>
     public int GetRandomColor()
     {
         return colorVector[Random.Range(0, colorsAvailable)];
     }
-
-    // Bonus 1 - meteor
-    // Bonus 2 - colorless
-    // Bonus 3 - same color
-    // Bonus 4 - obstacle
-    // Bonus 5 - energy - not to be included to permitted bonuses
+    
+    /// <summary>
+    /// Returns random bonus from the allowed bonus list
+    /// </summary>
+    /// <remarks>
+    /// Can return energy gem. It has its own chance of appearance
+    /// </remarks>
+    /// <returns></returns>
     public int GetRandomBonus()
     {
-        int bonus = -1;
+        int bonus = (int) Bonus.NONE;
 
         int random = Random.Range(0, 100);
 
         bonus = random < bonusesPercentage ?
-            permittedBonuses[Random.Range(0, permittedBonuses.Length)] : -1;
-
-        bonus = (random > bonusesPercentage && 
-            random < bonusesPercentage + energyPercentage) ? 5 : bonus; // Energy or leave unchanged
+            permittedBonuses[Random.Range(0, permittedBonuses.Length)] : (int) Bonus.NONE;
+        
+        bonus = spawnEnergy && (random > bonusesPercentage && 
+            random < bonusesPercentage + energyPercentage) ? (int) Bonus.ENERGY : bonus; // Energy or leave unchanged
 
         return bonus;
     }
 
-    // Calculates offset and gem size to fit the screen properly
+    /// <summary>
+    /// Calculates the offset and the size of gems to fit the screen properly
+    /// </summary>
     private void ComputeGemSizes()
     {
         // Size of the gems sides
-        float pixelsInUnit = Screen.height / 10f; // Size of the camera is 5
+        float height = 2f * mainCamera.orthographicSize;
+        float width = height * mainCamera.aspect;
         gemSize = Mathf.Min(
-            screenBound.x * Screen.width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
-            screenBound.y * Screen.height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)
+            screenBound.x * width / (gridSize.x + (gridSize.x - 1) * gemOffsetParam),
+            screenBound.y * height / (gridSize.y + (gridSize.y - 1) * gemOffsetParam)
             );
-        gemSize /= pixelsInUnit;
-        gemOffset = gemOffsetParam * gemSize;
+        gemOffset = gemOffsetParam * gemSize;        
     }
     
-    // Loads previously saved state of the game and replaces current one
-    // Uses 'currentSlot' variable to identify the file from which to load
+    /// <summary>
+    /// Loads previously saved state of the game and replaces current one
+    /// Uses 'slotToLoad' variable to identify the file from which to load
+    /// </summary>
     public void LoadLevel()
     {
         LevelData ld = SaveUnit.LoadLevel(slotToLoad);
@@ -130,7 +162,7 @@ public class ParamUnit : MonoBehaviour {
             {
                 if (!lu.grid[x, y].IsEmpty())
                 {
-                    gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                    gu.DestroyGem(x, y, lu.grid[x, y].Gem.Color, false);
                 }
             }
         }
@@ -170,7 +202,8 @@ public class ParamUnit : MonoBehaviour {
             }
         }
 
-        colorsAvailable = ld.availableColors;
+        colorsAvailable = ld.colorVector.Length;
+        colorVector = ld.colorVector;
         permittedBonuses = ld.availableBonuses;
 
         sequenceSize = ld.sequenceSize;
@@ -180,6 +213,7 @@ public class ParamUnit : MonoBehaviour {
         gu.RecreateEnergyBar(maximumEnergy);
 
         spawnNewGems = ld.spawnNewGems;
+        spawnEnergy = ld.spawnEnergy;
         randomizeColors = ld.randomizeColors;
 
         slotToLoad = -1;

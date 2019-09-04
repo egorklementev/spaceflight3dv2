@@ -43,11 +43,7 @@ public class EditorLogic : MonoBehaviour
         }
 
         FillGemGrid(); // Initial grid filling
-    }
-
-    private void Update()
-    {
-    }
+    }    
 
     public Gem GetRandomGem()
     {
@@ -57,14 +53,14 @@ public class EditorLogic : MonoBehaviour
         };
 
         // Some specific colors are needed for some bonuses
-        if (gem.Bonus != -1)
+        if (gem.Bonus != (int) ParamUnit.Bonus.NONE)
         {
             switch (gem.Bonus)
             {
-                case 2:
+                case (int)ParamUnit.Bonus.COLORLESS:
                     gem.Color = 8;
                     break;
-                case 4:
+                case (int)ParamUnit.Bonus.OBSTACLE:
                     gem.Color = 9;
                     break;
                 default:
@@ -136,6 +132,7 @@ public class EditorLogic : MonoBehaviour
     {
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
+        ResetSelection();
     }
 
     // If less than two gems were selected

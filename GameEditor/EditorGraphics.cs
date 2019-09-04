@@ -3,7 +3,6 @@ using System.Collections;
 
 public class EditorGraphics : MonoBehaviour
 {
-
     [Header("Meshes")]
     public Mesh[] gridGemsMeshes;
     [Space(10)]
@@ -15,26 +14,30 @@ public class EditorGraphics : MonoBehaviour
     [Header("Color selection panel")]
     public GameObject colorSelectionGroup;
     public ColorSelection colorSelector;
-    public float colorSize = 1f; 
     [Space(10)]
 
     [Header("Bonus selection panel")]
     public GameObject bonusSelectionGroup;
     public BonusSelection bonusSelector;
-    public float bonusSize = 1f;
     [Space(10)]
 
     [Header("Units' refs")]
     public EditorLogic lu;
     public EditorInput iu;
     public EditorParams pu;
-    public FadeManager fadeManager;
-    
+    [Space(10)]
+
+    [Header("Anchors")]
+    public GameObject gemGridAnchor;
+    public GameObject toolbarColorAnchor;
+    public GameObject toolbarBonusAnchor;
+
     private GameObject[,] grid;
 
     private int gSizeX;
     private int gSizeY;
 
+    private int workingObjs = 0;
     private Vector3 initialPos;
 
     public static Color[] colors;
@@ -52,29 +55,22 @@ public class EditorGraphics : MonoBehaviour
         colors[7] = Color.yellow;
         colors[8] = Color.gray;
         colors[9] = Color.white;
-
+        
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
-        grid = new GameObject[gSizeX, gSizeY];
         RecreateGrid(gSizeX, gSizeY);
         initialPos = transform.position;
         
         transform.position = initialPos;
         transform.Translate(
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) + pu.gemSize / 2f,
-            pu.gemSize / 2f,
+            pu.gemSize,
             0);
-
-        transform.localScale *= 45f; // Magic number   
-        
-        colorSelector.CreatePanel(pu.gemSize * colorSize, pu.colorVector);        
-        bonusSelector.CreatePanel(pu.gemSize * bonusSize, pu.permittedBonuses);
-    }
-
-    private void Update()
-    {
-
-    }
+        gemGridAnchor.transform.position = transform.position;
+               
+        colorSelector.CreatePanel(pu.colorVector, toolbarColorAnchor);        
+        bonusSelector.CreatePanel(pu.permittedBonuses, toolbarBonusAnchor);
+    }    
 
     public void SpawnGem(int x, int y, int color, int bonus)
     {
@@ -87,7 +83,7 @@ public class EditorGraphics : MonoBehaviour
         position.x += (pu.gemSize + pu.gemOffset) * x;
         position.y += (pu.gemSize + pu.gemOffset) * y + v_offset;
 
-        grid[x, y] = Instantiate(gems[bonus == -1 ? 0 : bonus], transform);
+        grid[x, y] = Instantiate(gems[bonus == (int)ParamUnit.Bonus.NONE ? 0 : bonus], gemGridAnchor.transform);
         grid[x, y].transform.localScale = new Vector3(pu.gemSize, pu.gemSize, pu.gemSize);
         if (grid[x, y].GetComponent<Scale>() != null)
         {
@@ -96,13 +92,20 @@ public class EditorGraphics : MonoBehaviour
         grid[x, y].transform.position = position;
         grid[x, y].GetComponent<Renderer>().material.color = colors[color];
         grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[color];
-        if (bonus == 3)
+        
+        switch(bonus)
         {
-            grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[8];
-        }
-        if (bonus == 4)
-        {
-            grid[x, y].tag = "Unbreakable";
+            case (int)ParamUnit.Bonus.OBSTACLE:
+            case (int)ParamUnit.Bonus.ICE_1:
+            case (int)ParamUnit.Bonus.ICE_2:
+            case (int)ParamUnit.Bonus.ICE_3:
+                grid[x, y].tag = "Untouchable";
+                break;
+            case (int)ParamUnit.Bonus.SAME_COLOR:
+                grid[x, y].GetComponent<MeshFilter>().mesh = gridGemsMeshes[8];
+                break;
+            default:
+                break;
         }
 
         StartCoroutine(MoveGem(grid[x, y], x, y));
@@ -110,7 +113,6 @@ public class EditorGraphics : MonoBehaviour
 
     public void DestroyGem(int x, int y, int color)
     {
-
         Destroy(grid[x, y]);
         grid[x, y] = null;        
     }
@@ -130,6 +132,8 @@ public class EditorGraphics : MonoBehaviour
         GameObject temp = grid[(int)pos1.x, (int)pos1.y];
         grid[(int)pos1.x, (int)pos1.y] = grid[(int)pos2.x, (int)pos2.y];
         grid[(int)pos2.x, (int)pos2.y] = temp;
+
+        EditorParams.isSaved = false;
     }
 
     // Operates with the selection of the gems
@@ -219,7 +223,7 @@ public class EditorGraphics : MonoBehaviour
     public void SelectBonus(GameObject gem)
     {
         // Search if it is bonus panel
-        for (int i = 0; i < pu.permittedBonuses.Length; ++i)
+        for (int i = 0; i < pu.permittedBonuses.Length + 2; ++i) // +2 since energy and deselector are always available 
         {
             if (gem.Equals(bonusSelector.bonusGrid[i]) && !bonusSelector.isProcessing)
             {
@@ -250,13 +254,14 @@ public class EditorGraphics : MonoBehaviour
             {
                 if (gem.Equals(grid[x, y]))
                 {
+                    EditorParams.isSaved = false;
                     DestroyGem(x, y, lu.grid[x, y].Gem.Color);
                     lu.grid[x, y].Gem.Color = pu.colorVector[colorSelector.currentSelected];
                     switch(lu.grid[x, y].Gem.Bonus)
                     {
-                        case 2:
-                        case 4:
-                            lu.grid[x, y].Gem.Bonus = -1;
+                        case (int)ParamUnit.Bonus.COLORLESS:
+                        case (int)ParamUnit.Bonus.OBSTACLE:
+                            lu.grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.NONE;
                             break;
                     }
                     SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
@@ -273,27 +278,62 @@ public class EditorGraphics : MonoBehaviour
             {
                 if (gem.Equals(grid[x, y]))
                 {
-                    DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                    bool wasBonused = false;
 
-                    switch (pu.permittedBonuses[bonusSelector.currentSelected])
-                    {    
-                        case 2:                       
-                            lu.grid[x, y].Gem.Color = 8;
-                            break;
-                        case 4:
-                            lu.grid[x, y].Gem.Color = 9;
-                            break;
-                        default:
-                            if (lu.grid[x, y].Gem.Bonus == 2 || lu.grid[x, y].Gem.Bonus == 4)
+                    if (bonusSelector.currentSelected == 0)
+                    {                        
+                        if (lu.grid[x, y].Gem.Bonus != (int)ParamUnit.Bonus.NONE)
+                        {
+                            wasBonused = true;
+                            if (lu.grid[x, y].Gem.Bonus == (int)ParamUnit.Bonus.COLORLESS || lu.grid[x, y].Gem.Bonus == (int)ParamUnit.Bonus.OBSTACLE)
                             {
                                 lu.grid[x, y].Gem.Color = pu.GetRandomColor();
                             }
-                            break;
+                            lu.grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.NONE;
+                        }                                                              
                     }
+                    else if (bonusSelector.currentSelected == 1)
+                    {
+                        if (lu.grid[x, y].Gem.Bonus != (int)ParamUnit.Bonus.ENERGY)
+                        {
+                            wasBonused = true;
+                            if (lu.grid[x, y].Gem.Bonus == (int)ParamUnit.Bonus.COLORLESS || lu.grid[x, y].Gem.Bonus == (int)ParamUnit.Bonus.OBSTACLE)
+                            {
+                                lu.grid[x, y].Gem.Color = pu.GetRandomColor();
+                            }
+                            lu.grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ENERGY;
+                        }                        
+                    }
+                    else
+                    {
+                        switch (pu.permittedBonuses[bonusSelector.currentSelected - 2])
+                        {
+                            case (int)ParamUnit.Bonus.COLORLESS:
+                                lu.grid[x, y].Gem.Color = 8;
+                                break;
+                            case (int)ParamUnit.Bonus.OBSTACLE:
+                                lu.grid[x, y].Gem.Color = 9;
+                                break;
+                            default:
+                                if (lu.grid[x, y].Gem.Bonus == (int)ParamUnit.Bonus.COLORLESS || lu.grid[x, y].Gem.Bonus == (int)ParamUnit.Bonus.OBSTACLE)
+                                {
+                                    lu.grid[x, y].Gem.Color = pu.GetRandomColor();
+                                }
+                                break;
+                        }
 
-
-                    lu.grid[x, y].Gem.Bonus = pu.permittedBonuses[bonusSelector.currentSelected];                    
-                    SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
+                        if (lu.grid[x, y].Gem.Bonus != pu.permittedBonuses[bonusSelector.currentSelected - 2])
+                        {
+                            wasBonused = true;
+                            lu.grid[x, y].Gem.Bonus = pu.permittedBonuses[bonusSelector.currentSelected - 2];
+                        }
+                    }
+                    if (wasBonused)
+                    {
+                        EditorParams.isSaved = false;
+                        DestroyGem(x, y, lu.grid[x, y].Gem.Color);
+                        SpawnGem(x, y, lu.grid[x, y].Gem.Color, lu.grid[x, y].Gem.Bonus, 0);
+                    }
                 }
             }
         }
@@ -325,12 +365,18 @@ public class EditorGraphics : MonoBehaviour
         gSizeY = (int)pu.gridSize.y;
         transform.position = initialPos;
         transform.Translate(
-            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
-            pu.gemSize / 2f,
+            -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) + pu.gemSize / 2f,
+            pu.gemSize,
             0);
+        gemGridAnchor.transform.position = transform.position;
         
-        colorSelector.ReCreatePanel(pu.gemSize * colorSize, pu.colorVector);
-        bonusSelector.ReCreatePanel(pu.gemSize * bonusSize, pu.permittedBonuses);
+        colorSelector.ReCreatePanel(pu.colorVector, toolbarColorAnchor);
+        bonusSelector.ReCreatePanel(pu.permittedBonuses, toolbarBonusAnchor);
+    }
+
+    public bool IsWorking()
+    {
+        return workingObjs > 0;
     }
 
     // Moves given gem from it's current position to specific x-y position on the grid
@@ -340,6 +386,7 @@ public class EditorGraphics : MonoBehaviour
         Vector3 newPosition = transform.position;
         newPosition.x += (pu.gemSize + pu.gemOffset) * x;
         newPosition.y += (pu.gemSize + pu.gemOffset) * y;
+        workingObjs++;
         while (velocity.sqrMagnitude > .001f)
         {
             if (gem == null)
@@ -349,6 +396,7 @@ public class EditorGraphics : MonoBehaviour
             gem.transform.position = Vector3.SmoothDamp(gem.transform.position, newPosition, ref velocity, pu.gemMoveTime);
             yield return new WaitForEndOfFrame();
         }
+        workingObjs--;
     }
 
     // Scales given gem to some scale
@@ -357,8 +405,11 @@ public class EditorGraphics : MonoBehaviour
         Vector3 currentScale = gem.transform.localScale;
         for (float t = 0; t < 1f; t += Time.deltaTime * speed)
         {
-            gem.transform.localScale = Vector3.Lerp(currentScale, finalScale, t);
-            yield return new WaitForEndOfFrame();
+            if (gem != null)
+            {
+                gem.transform.localScale = Vector3.Lerp(currentScale, finalScale, t);
+                yield return new WaitForEndOfFrame();         
+            }
         }
     }
 
