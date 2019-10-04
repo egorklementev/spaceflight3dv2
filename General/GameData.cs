@@ -10,5 +10,8 @@ public class GameData {
     public int energyUpgrade;
 
     public float autosaveTimer;
+
+    public int planetsReached;
+    public int currentLevel;
     
 }

@@ -26,8 +26,8 @@ public static class SaveUnit {
         {
             switch (Application.platform)
             {
-                case RuntimePlatform.WindowsEditor:
-                    dataAsJson = File.ReadAllText(filepath);
+                case RuntimePlatform.WindowsEditor:                    
+                    dataAsJson = File.ReadAllText(filepath);                    
                     break;
                 case RuntimePlatform.Android:
                     WWW reader = new WWW(filepath);
