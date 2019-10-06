@@ -9,7 +9,9 @@ public class PortInput : MonoBehaviour {
     public Camera mainCamera;
 
     private Vector2 previosPosition = new Vector2(-1f,-1f);
-    
+
+    private bool touchMoved = false;
+
     private void Update()
     {
         if (Application.platform == RuntimePlatform.Android)
@@ -46,23 +48,34 @@ public class PortInput : MonoBehaviour {
                     previosPosition.y = touch.position.y;
                 }
 
+                if (touch.phase == TouchPhase.Began)
+                {
+                    touchMoved = false;
+                }
+
+                if (touch.phase == TouchPhase.Moved)
+                {
+                    touchMoved = true;
+                }
+
                 // Taps on buildings
                 RaycastHit hitInfo = new RaycastHit();
                 bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(touch.position), out hitInfo);
 
-                if (hit && touch.phase == TouchPhase.Ended)
+                if (hit && touch.phase == TouchPhase.Ended && !touchMoved)
                 {
                     switch (hitInfo.transform.gameObject.name)
                     {
                         case "Hangar":
+                            PortUI.camPos = mainCamera.transform.position;
                             fm.SetLevel(5);
                             break;
                         case "Tower":
+                            PortUI.camPos = mainCamera.transform.position;
                             fm.SetLevel(6);
                             break;
                     }
                 }
-
             }
 
             bool cond1 = mainCamera.transform.position.z < -Mathf.Abs(mainCamera.transform.position.x) + scrollBound;
@@ -72,13 +85,11 @@ public class PortInput : MonoBehaviour {
             {
                 Vector3 origin = new Vector3(0f, mainCamera.transform.position.y, 0f);
                 mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, origin, 2f * Time.deltaTime);
-
-                cond1 = mainCamera.transform.position.z < Mathf.Abs(mainCamera.transform.position.x) + scrollBound;
-                cond2 = mainCamera.transform.position.z > Mathf.Abs(mainCamera.transform.position.x) - scrollBound;
             }
         }
         else
         {
+
             if (Input.GetMouseButtonUp(0))
             {
                 // Taps on buildings
@@ -90,9 +101,11 @@ public class PortInput : MonoBehaviour {
                     switch (hitInfo.transform.gameObject.name)
                     {
                         case "Hangar":
+                            PortUI.camPos = mainCamera.transform.position;
                             fm.SetLevel(5);
                             break;
                         case "Tower":
+                            PortUI.camPos = mainCamera.transform.position;
                             fm.SetLevel(6);
                             break;
                     }
@@ -104,6 +117,7 @@ public class PortInput : MonoBehaviour {
 
             if (Input.GetMouseButton(0))
             {
+
                 if (previosPosition != new Vector2(-1f, -1f))
                 {
                     Vector3 initialPos = mainCamera.transform.position;
@@ -130,9 +144,6 @@ public class PortInput : MonoBehaviour {
             {
                 Vector3 origin = new Vector3(0f, mainCamera.transform.position.y, 0f);
                 mainCamera.transform.position = Vector3.Lerp(mainCamera.transform.position, origin, 2f * Time.deltaTime);
-
-                cond1 = mainCamera.transform.position.z < Mathf.Abs(mainCamera.transform.position.x) + scrollBound;
-                cond2 = mainCamera.transform.position.z > Mathf.Abs(mainCamera.transform.position.x) - scrollBound;
             }
         }
     }

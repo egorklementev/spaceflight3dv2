@@ -33,6 +33,13 @@ public class MessageText : MonoBehaviour {
     {
         DisplayMessage(message, timeParam, ScreenPosition.CENTER);
     }
+
+    /// <summary>
+    /// A function for displaying a message on the screen
+    /// </summary>
+    /// <param name="message">The string representing the actual message</param>
+    /// <param name="timeParam">Time in seconds to be displayed</param>
+    /// <param name="pos">The position on the screen</param>
     public void DisplayMessage(string message, float timeParam, ScreenPosition pos)
     {
         messageText.text = message;

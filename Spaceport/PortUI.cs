@@ -13,11 +13,32 @@ public class PortUI : MonoBehaviour {
 
     public RectTransform underlay;
 
-    private float underlayLength;
+    public Transform infrastructure;
+    public GameObject[] rockets;
 
+    public Camera cam;
+
+    public static Vector3 camPos = new Vector3(-1, -1, -1);
+
+    private float underlayLength;
+    private GameObject standingRocket;
+   
     private void Awake()
     {
         underlayLength = underlay.sizeDelta.x;
+        int selectedRocket = GameDataManager.instance.generalData.selectedRocket;
+        if (selectedRocket != -1)
+        {
+            standingRocket = Instantiate(rockets[selectedRocket], infrastructure);
+        }
+        if (camPos != new Vector3(-1, -1, -1))
+        {
+            cam.transform.position = camPos;
+        }
+        else
+        {
+            camPos = cam.transform.position;
+        }
     }
 
     private void Update () {

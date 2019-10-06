@@ -40,6 +40,8 @@ public class HangarManager : MonoBehaviour {
     public GameObject sheathingIcon;
     public GameObject frameIcon;
     public Button buyButton;
+    public Button selectButton;
+    public TextMeshProUGUI selBtnText;
     public Button agreeBtn;
     public MessageText mt;
     [Space(10)]
@@ -111,17 +113,34 @@ public class HangarManager : MonoBehaviour {
                 LocalizationManager.instance.GetLocalizedValue("hangar_rocket_purchase_1") +
                 LocalizationManager.instance.GetLocalizedValue("rocket_" + (selectedRocket + 1).ToString() + "_title") +
                 LocalizationManager.instance.GetLocalizedValue("hangar_rocket_purchase_2"),
+                3f,
                 MessageText.ScreenPosition.TOP
                 );
 
             rd.purchased = true;
 
             buyButton.interactable = false;
+            selectButton.interactable = true;
         }
         else
         {
             mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_not_enough_metal"), MessageText.ScreenPosition.TOP);
         }
+    }
+
+    public void SelectRocket()
+    {
+        GameDataManager.instance.generalData.selectedRocket = selectedRocket;
+        selectButton.interactable = false;
+
+        mt.DisplayMessage(
+                LocalizationManager.instance.GetLocalizedValue("hangar_rocket_purchase_1") +
+                LocalizationManager.instance.GetLocalizedValue("rocket_" + (selectedRocket + 1).ToString() + "_title") +
+                LocalizationManager.instance.GetLocalizedValue("hangar_rocket_was_selected"),
+                3f,
+                MessageText.ScreenPosition.TOP
+                );
+
     }
 
     public void UpgradeRocket()
@@ -306,6 +325,20 @@ public class HangarManager : MonoBehaviour {
 
         rocketPriceText.text = rd.price.ToString();
         rocketEnergyText.text = rd.maxEnergy.ToString();
+
+        bool isPossibleToSelect = GameDataManager.instance.generalData.selectedRocket != selectedRocket && rd.purchased;
+        selectButton.interactable = isPossibleToSelect;
+        string selectButtonText = "";
+        if (rd.purchased && !isPossibleToSelect)
+        {
+            selectButtonText = "hangar_selected_rocket";
+        }
+        else
+        {
+            selectButtonText = "hangar_select_rocket";
+
+        }
+        selBtnText.text = LocalizationManager.instance.GetLocalizedValue(selectButtonText);
 
         UpdateBuffs();
         
