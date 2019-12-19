@@ -29,6 +29,8 @@ public class InputUnit : MonoBehaviour {
                     gu.ResetSelection();
                     lu.ResetSelection();
 
+                    lu.movesLeft--;
+
                     wasSwap = true;
                 }
                 else
@@ -68,6 +70,11 @@ public class InputUnit : MonoBehaviour {
     public void SetGameOver()
     {
         isGameOver = true;
+    }
+
+    public bool IsGameOver()
+    {
+        return isGameOver;
     }
 
 }

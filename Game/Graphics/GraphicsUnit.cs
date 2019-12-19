@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using TMPro;
 using System.Collections;
 
 /// <summary>
@@ -22,8 +23,14 @@ public class GraphicsUnit : MonoBehaviour {
     [Space(10)]
 
     [Header("UI")]
-    public GameObject winText;
-    public GameObject loseText;
+    public Animator winTextAnim;
+    public Animator loseTextAnim;
+    public GameObject timeIcon;
+    public TextMeshProUGUI timeText;
+    public GameObject movesIcon;
+    public TextMeshProUGUI movesText;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI initialMessage;
     [Space(10)]
 
     [Header("Anchors")]
@@ -70,6 +77,7 @@ public class GraphicsUnit : MonoBehaviour {
             0);
         gemGridAnchor.transform.position = transform.position;
 
+        // Position and look of energy bar
         energyBar = new GameObject[pu.maximumEnergy];
         ComputeEnergyPrefabSize();
         energyBarObj.transform.Translate(.5f * energyPrefabSize, -.75f * energyPrefabSize, 0f);
@@ -78,6 +86,24 @@ public class GraphicsUnit : MonoBehaviour {
         {
             AddEnergy(i);
         }
+
+        int planetId = GameDataManager.instance.generalData.selectedPlanet;
+        int levelId = planetId != -1 ? GameDataManager.instance.planetData[planetId].levelsFinished + 1 : -1;
+
+        // Initial message
+        if (levelId == -1)
+        {
+            initialMessage.text = LocalizationManager.instance.GetLocalizedValue("game_level") + "E";
+        }
+        else if (levelId > GameDataManager.instance.planetData[planetId].levelNum)
+        {
+            initialMessage.text = LocalizationManager.instance.GetLocalizedValue("game_endless_level");
+        }
+        else
+        {
+            initialMessage.text = LocalizationManager.instance.GetLocalizedValue("game_level") + levelId.ToString();
+        }
+
 
         colors = new Color[10];
         colors[0] = Color.blue;
@@ -92,6 +118,13 @@ public class GraphicsUnit : MonoBehaviour {
         colors[9] = Color.white;
     }    
     
+    private void Update()
+    {
+        timeText.text = ParamUnit.GetParsedTime((int) lu.timeLeft);
+        movesText.text = lu.movesLeft.ToString();
+        scoreText.text = LocalizationManager.instance.GetLocalizedValue("game_score") + lu.score.ToString() + "/" + pu.scoreToWin.ToString();
+    }
+
     /// <summary>
     /// Spawns a gem on the grid with the default initial height of the spawn
     /// </summary>
@@ -323,12 +356,13 @@ public class GraphicsUnit : MonoBehaviour {
     {
         if (isVictory)
         {
-            winText.SetActive(true);
+            winTextAnim.gameObject.SetActive(true);
+            winTextAnim.Play("FadeOut");
         } else
         {
-            loseText.SetActive(true);
-        }
-        fadeManager.SetLevel(1); // TODO: result screen        
+            loseTextAnim.gameObject.SetActive(true);
+            loseTextAnim.Play("FadeOut");
+        }      
     }
 
     /// <summary>
@@ -440,7 +474,12 @@ public class GraphicsUnit : MonoBehaviour {
         transform.Translate(
             -(gSizeX * pu.gemSize + (gSizeX - 1) * pu.gemOffset) / 2f + pu.gemSize / 2f,
             pu.gemSize,
-            0);        
+            0);
+
+        timeIcon.SetActive(pu.timeAvailable != 0);
+        timeText.gameObject.SetActive(pu.timeAvailable != 0);
+        movesIcon.SetActive(pu.movesAvailable != 0);
+        movesText.gameObject.SetActive(pu.movesAvailable != 0);
     }
 
     /// <summary>
@@ -455,7 +494,7 @@ public class GraphicsUnit : MonoBehaviour {
         energyBar[i] = Instantiate(energyPrefab, energyBarAnchor.transform);
         energyBar[i].transform.localScale = new Vector3(energyPrefabSize, .66f * energyPrefabSize, .66f * energyPrefabSize);
         energyBar[i].transform.Translate(
-            .75f * energyBar[i].transform.localScale.x * i, 0f, 0f
+            .5f * energyBar[i].transform.localScale.x * i, 0f, 0f
             );
     }
 

@@ -39,6 +39,13 @@ public class ParamUnit : MonoBehaviour {
     public float meteorOffset = 10f;
     [Space(10)]
 
+    [Header("Win condition and level params")]
+    public int winCondition = 1;
+    public int timeAvailable = 60;
+    public int scoreToWin = 100;
+    public int movesAvailable = 0;
+    [Space(10)]
+
     [Header("Units' refs")]
     public GraphicsUnit gu;
     public LogicUnit lu;
@@ -49,8 +56,10 @@ public class ParamUnit : MonoBehaviour {
     public float gemOffset;
     [HideInInspector]
     public float gemSize;
+    [HideInInspector]
+    public int[] colorVector;
 
-    public static int slotToLoad = -1;
+    public static int editorSlotToLoad = -1;
 
     public enum Bonus
     {
@@ -66,39 +75,38 @@ public class ParamUnit : MonoBehaviour {
         ICE_3 = 8
     }
 
-    private int[] colorVector;
+    public enum WinCondition
+    {
+        SCORE_REACHED,
+        FIELD_IS_EMPTY
+    }
     
     private void Start()
     {
-        #region Color vector for gem colors
-        if (randomizeColors)
-        {
-            colorVector = new int[colorsAvailable];
-            List<int> list = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
-            for (int i = 0; i < colorsAvailable; i++)
-            {
-                int index = Random.Range(0, list.Count);
-                colorVector[i] = list[index];
-                list.RemoveAt(index);
-            }
-        } else
-        {
-            colorVector = new int[colorsAvailable];
-            for (int i = 0; i < colorsAvailable; i++)
-            {
-                colorVector[i] = i;
-            }
-        }
-        #endregion
-        
+        ComputeGemColors();        
         ComputeGemSizes();
 
         gu.gameObject.SetActive(true);
         lu.gameObject.SetActive(true);
 
-        if (slotToLoad != -1)
+        if (editorSlotToLoad != -1)
         {
-            LoadLevel();     
+            LoadLevel("/Levels/Editor/", editorSlotToLoad);
+            editorSlotToLoad = -1;
+        }
+        else 
+        {            
+            int planetId = GameDataManager.instance.generalData.selectedPlanet;            
+            int levelToPlay = GameDataManager.instance.planetData[planetId].levelsFinished + 1;
+
+            if (levelToPlay <= GameDataManager.instance.planetData[planetId].levelNum)
+            {
+                LoadLevel("/Levels/Planet_" + (planetId + 1).ToString() + "/", levelToPlay);
+            }
+            else
+            {
+                LoadLevel("/Levels/Planet_" + (planetId + 1).ToString() + "/", 0); // Endless level
+            }
         }
     }
         
@@ -124,8 +132,11 @@ public class ParamUnit : MonoBehaviour {
 
         int random = Random.Range(0, 100);
 
-        bonus = random < bonusesPercentage ?
-            permittedBonuses[Random.Range(0, permittedBonuses.Length)] : (int) Bonus.NONE;
+        if (permittedBonuses.Length > 0)
+        {
+            bonus = random < bonusesPercentage ?
+                permittedBonuses[Random.Range(0, permittedBonuses.Length)] : (int)Bonus.NONE;
+        }
         
         bonus = spawnEnergy && (random > bonusesPercentage && 
             random < bonusesPercentage + energyPercentage) ? (int) Bonus.ENERGY : bonus; // Energy or leave unchanged
@@ -148,14 +159,40 @@ public class ParamUnit : MonoBehaviour {
         gemOffset = gemOffsetParam * gemSize;        
     }
     
+    private void ComputeGemColors()
+    {
+        if (randomizeColors)
+        {
+            colorVector = new int[colorsAvailable];
+            List<int> list = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7 };
+            for (int i = 0; i < colorsAvailable; i++)
+            {
+                int index = Random.Range(0, list.Count);
+                colorVector[i] = list[index];
+                list.RemoveAt(index);
+            }
+        }
+        else
+        {
+            colorVector = new int[colorsAvailable];
+            for (int i = 0; i < colorsAvailable; i++)
+            {
+                colorVector[i] = i;
+            }
+        }
+    }
+
     /// <summary>
     /// Loads previously saved state of the game and replaces current one
     /// Uses 'slotToLoad' variable to identify the file from which to load
     /// </summary>
-    public void LoadLevel()
+    public void LoadLevel(string path, int levelNumber)
     {
-        LevelData ld = SaveUnit.LoadLevel(slotToLoad);
-        
+        LevelData ld = SaveUnit.LoadLevel(levelNumber, path);
+
+        if (path == "/Levels/Editor/")
+            GameDataManager.instance.generalData.selectedRocket = -1;
+
         for (int x = 0; x < gridSize.x; x++)
         {
             for (int y = 0; y < gridSize.y; y++)
@@ -170,12 +207,31 @@ public class ParamUnit : MonoBehaviour {
         gridSize.x = ld.gridSizeX;
         gridSize.y = ld.gridSizeY;
 
+        randomizeColors = ld.randomizeColors;
+        colorsAvailable = ld.colorVector.Length;
+        permittedBonuses = ld.availableBonuses;
+
+        ComputeGemColors();
         ComputeGemSizes();
+
+        winCondition = ld.winCondition;
+        timeAvailable = ld.timeAvailable;
+        movesAvailable = ld.movesAvailable;
+        scoreToWin = ld.scoreToWin;
 
         gu.UpdateDataAfterLoading();
         lu.UpdateDataAfterLoading();
 
-        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);        
+        gu.RecreateGrid((int)gridSize.x, (int)gridSize.y);
+
+        int[] gemColors = ld.gemColors;
+        if (randomizeColors)
+        {
+            for (int i = 0; i < gemColors.Length; i++)
+            {
+                gemColors[i] = colorVector[IndexOf(ld.gemColors[i], ld.colorVector)];
+            }
+        }
 
         lu.grid = new Cell[(int)gridSize.x, (int)gridSize.y];
         for (int x = 0; x < (int)gridSize.x; x++)
@@ -188,7 +244,7 @@ public class ParamUnit : MonoBehaviour {
                     {
                         Gem = new Gem
                         {
-                            Color = ld.gemColors[x * (int)gridSize.y + y],
+                            Color = gemColors[x * (int)gridSize.y + y],
                             Bonus = ld.gemBonuses[x * (int)gridSize.y + y]
                         }
                     };
@@ -202,21 +258,51 @@ public class ParamUnit : MonoBehaviour {
             }
         }
 
-        colorsAvailable = ld.colorVector.Length;
-        colorVector = ld.colorVector;
-        permittedBonuses = ld.availableBonuses;
-
         sequenceSize = ld.sequenceSize;
         maximumEnergy = ld.maximumEnergy;
 
+        int rocketId = GameDataManager.instance.generalData.selectedRocket;
+        if (rocketId != -1)
+        {
+            maximumEnergy = GameDataManager.instance.rocketData[rocketId].maxEnergy;
+        }
         lu.suboptimalMoves = maximumEnergy;
         gu.RecreateEnergyBar(maximumEnergy);
 
         spawnNewGems = ld.spawnNewGems;
         spawnEnergy = ld.spawnEnergy;
-        randomizeColors = ld.randomizeColors;
 
-        slotToLoad = -1;
+        winCondition = ld.winCondition;
+        timeAvailable = ld.timeAvailable;
+        scoreToWin = ld.scoreToWin;
+        movesAvailable = ld.movesAvailable;
+
+        lu.ComputeResourceColors();
+    }
+
+    /// <summary>
+    /// A helper function to find the index of the element in the array
+    /// </summary>
+    /// <param name="n">Value to find index of</param>
+    /// <param name="array">Array to which value belongs</param>
+    /// <returns>Index of the first occurence of the given value in the array</returns>
+    private int IndexOf(int n, int[] array)
+    {
+        for (int i = 0; i < array.Length; i++)
+        {
+            if (n == array[i])
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public static string GetParsedTime (int seconds)
+    {
+        return (seconds / 60).ToString() + ":" + 
+            (seconds % 60 > 9 ? (seconds % 60).ToString() : "0" + (seconds % 60).ToString());
     }
 
 }

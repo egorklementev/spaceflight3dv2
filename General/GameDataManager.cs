@@ -5,13 +5,19 @@ public class GameDataManager : MonoBehaviour {
 
     public GameData generalData;
     public RocketData[] rocketData;
+    public PlanetData[] planetData;
     [Space(10)]
 
-    public int resPerStorageUpg = 50;
+    public int resPerStorageUpgMetal = 25;
+    public int resPerStorageUpgFuel = 50;
+    public int resPerStorageUpgEnergy = 5;
     [Space(10)]
 
     public int rocketNumber = 6;
     public int maxRocketUpgradeLevel = 5;
+    [Space(10)]
+
+    public int planetNumber = 12;
     [Space(10)]
 
     [Header("Upgrade params")]
@@ -34,6 +40,7 @@ public class GameDataManager : MonoBehaviour {
     private void Awake()
     {
         rocketData = new RocketData[rocketNumber];
+        planetData = new PlanetData[planetNumber];
 
         if (instance == null)
         {
@@ -54,6 +61,11 @@ public class GameDataManager : MonoBehaviour {
         {
             rocketData[i] = LoadDataFile<RocketData>("/RocketData/rocket_" + (i + 1).ToString() + ".json");
         }
+
+        for (int i = 0; i < planetNumber; i++)
+        {
+            planetData[i] = LoadDataFile<PlanetData>("/PlanetData/planet_" + (i + 1).ToString() + ".json");
+        }
     }
 
     private void Update()
@@ -69,6 +81,10 @@ public class GameDataManager : MonoBehaviour {
             for (int i = 0; i < rocketNumber; i++)
             {
                 SaveToDataFile("/RocketData/rocket_" + (i + 1).ToString() + ".json", rocketData[i]);
+            }
+            for (int i = 0; i < planetNumber; i++)
+            {
+                SaveToDataFile("/PlanetData/planet_" + (i + 1).ToString() + ".json", planetData[i]);
             }
 
             autosaveTimer = generalData.autosaveTimer;            
@@ -136,14 +152,14 @@ public class GameDataManager : MonoBehaviour {
     /// <returns>False if old_energy + energy exceeds max_energy, true otherwise</returns>
     public bool AddEnergy(int energy)
     {
-        if (generalData.energy + energy <= generalData.energyUpgrade * resPerStorageUpg)
+        if (generalData.energy + energy <= generalData.energyUpgrade * resPerStorageUpgEnergy)
         {
             generalData.energy += energy;
             return true;
         }
         else
         {
-            generalData.energy = generalData.energyUpgrade * resPerStorageUpg;
+            generalData.energy = generalData.energyUpgrade * resPerStorageUpgEnergy;
             return false;
         }
     }
@@ -173,14 +189,14 @@ public class GameDataManager : MonoBehaviour {
     /// <returns>False if old_metal + metal exceeds max_metal, true otherwise</returns>
     public bool AddMetal(int metal)
     {
-        if (generalData.metal + metal <= generalData.metalUpgrade * resPerStorageUpg)
+        if (generalData.metal + metal <= generalData.metalUpgrade * resPerStorageUpgMetal)
         {
             generalData.metal += metal;
             return true;
         }
         else
         {
-            generalData.metal = generalData.metalUpgrade * resPerStorageUpg;
+            generalData.metal = generalData.metalUpgrade * resPerStorageUpgMetal;
             return false;
         }
     }
@@ -210,14 +226,14 @@ public class GameDataManager : MonoBehaviour {
     /// <returns>False if old_fuel + fuel exceeds max_fuel, true otherwise</returns>
     public bool AddFuel(int fuel)
     {
-        if (generalData.fuel + fuel <= generalData.fuelUpgrade * resPerStorageUpg)
+        if (generalData.fuel + fuel <= generalData.fuelUpgrade * resPerStorageUpgFuel)
         {
             generalData.fuel += fuel;
             return true;
         }
         else
         {
-            generalData.fuel = generalData.fuelUpgrade * resPerStorageUpg;
+            generalData.fuel = generalData.fuelUpgrade * resPerStorageUpgFuel;
             return false;
         }
     }
@@ -240,15 +256,64 @@ public class GameDataManager : MonoBehaviour {
         }
     }
     
+    public float GetEngineBonus(int rocketId, int level)
+    {
+        if (rocketId == -1)
+            return 0f;
+        return (level - 1) * buffPerEngineUpg / 100f + rocketId / 20f;
+    }
+    public float GetEngineBonus(int rocketId)
+    {
+        if (rocketId == -1)
+            return 0f;
+        return GetEngineBonus(rocketId, rocketData[rocketId].engineLevel);
+    }
+    public float GetEngineBonus()
+    {
+        return GetEngineBonus(generalData.selectedRocket);
+    }
+    public float GetSheathingBonus(int rocketId, int level)
+    {
+        if (rocketId == -1)
+            return 0f;
+        return (level - 1) * buffPerSheathingUpg / 100f + rocketId / 20f;
+    }
+    public float GetSheathingBonus(int rocketId)
+    {
+        if (rocketId == -1)
+            return 0f;
+        return GetSheathingBonus(rocketId, rocketData[rocketId].sheathingLevel);
+    }
+    public float GetSheathingBonus()
+    {
+        return GetSheathingBonus(generalData.selectedRocket);
+    }
+    public float GetFrameBonus(int rocketId, int level)
+    {
+        if (rocketId == -1)
+            return 0f;
+        return (level - 1) * buffPerFrameUpg / 100f + rocketId / 20f;
+    }
+    public float GetFrameBonus(int rocketId)
+    {
+        if (rocketId == -1)
+            return 0f;
+        return GetFrameBonus(rocketId, rocketData[rocketId].frameLevel);
+    }
+    public float GetFrameBonus()
+    {
+        return GetFrameBonus(generalData.selectedRocket);
+    }
+
     private void DebugResourcesIncreaser()
     {
         if (Input.GetKeyUp(KeyCode.UpArrow))
         {
-            int addition = generalData.energyUpgrade * resPerStorageUpg / 4;
+            int addition = generalData.energyUpgrade * resPerStorageUpgEnergy / 4;
             AddEnergy(addition);
-            addition = generalData.metalUpgrade * resPerStorageUpg / 4;
+            addition = generalData.metalUpgrade * resPerStorageUpgMetal / 4;
             AddMetal(addition);
-            addition = generalData.fuelUpgrade * resPerStorageUpg / 4;
+            addition = generalData.fuelUpgrade * resPerStorageUpgFuel / 4;
             AddFuel(addition);
         }
 

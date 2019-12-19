@@ -20,7 +20,7 @@ public class LocalizationManager : MonoBehaviour {
 
             if (!GetIsReady())
                 LoadLocalizedText("lang" + Application.systemLanguage + ".json");
-            //LoadLocalizedText("langEnglish.txt");
+            //LoadLocalizedText("langEnglish.json");
 
         }
         else if (instance != this)

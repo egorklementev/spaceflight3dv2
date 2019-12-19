@@ -32,6 +32,13 @@ public class EditorParams : MonoBehaviour
     public int[] permittedBonuses;
     [Space(10)]
 
+    [Header("Level type and params")]
+    public int winCondition = 1;
+    public int timeAvailable = 60;
+    public int scoreToWin = 100;
+    public int movesAvailable = 0;
+    [Space(10)]
+
     [Header("Units' refs")]
     public EditorGraphics gu;
     public EditorLogic lu;
@@ -179,7 +186,7 @@ public class EditorParams : MonoBehaviour
         {
             currentSlot = 0;
         }
-        SaveUnit.SaveLevel(this, lu, currentSlot);
+        SaveUnit.SaveLevel(this, lu, currentSlot, "/Levels/Editor/");
 
         string levelSaved = LocalizationManager.instance.GetLocalizedValue("editor_level_saved");
         mt.DisplayMessage(levelSaved + " " + currentSlot.ToString() + "!", 2.5f);
@@ -194,7 +201,7 @@ public class EditorParams : MonoBehaviour
         currentSlot = loadSlot;
         saveSlot = loadSlot;
 
-        LevelData ld = SaveUnit.LoadLevel(currentSlot);
+        LevelData ld = SaveUnit.LoadLevel(currentSlot, "/Levels/Editor/");
 
         if (ld == null)
         {
@@ -214,6 +221,11 @@ public class EditorParams : MonoBehaviour
                     }
                 }
             }
+
+            winCondition = ld.winCondition;
+            timeAvailable = ld.timeAvailable;
+            movesAvailable = ld.movesAvailable;
+            scoreToWin = ld.scoreToWin;
 
             colorsAvailable = ld.colorVector.Length;
             permittedBonuses = ld.availableBonuses;
@@ -273,10 +285,10 @@ public class EditorParams : MonoBehaviour
         {
             currentSlot = 0;
             SaveLevel(true);
-            ParamUnit.slotToLoad = 0;
+            ParamUnit.editorSlotToLoad = 0;
         } else
         {
-            ParamUnit.slotToLoad = currentSlot;
+            ParamUnit.editorSlotToLoad = currentSlot;
         }
     }
 
@@ -373,6 +385,57 @@ public class EditorParams : MonoBehaviour
         if (maximumEnergy > 1)
         {
             maximumEnergy--;
+        }
+    }
+
+    public void IncreaseWinCondition()
+    {
+        if (winCondition < 2)
+        {
+            winCondition++;
+        }
+    }
+    public void DecreaseWinCondition()
+    {
+        if (winCondition > 1)
+        {
+            winCondition--;
+        }
+    }
+
+    public void IncreaseTimeAvailable()
+    {
+        timeAvailable += 10;
+    }
+    public void DecreaseTimeAvailable()
+    {
+        if (timeAvailable > 0)
+        {
+            timeAvailable -= 10;
+        }
+    }
+
+    public void IncreaseScoreToWin()
+    {
+        scoreToWin += 100;
+    }
+    public void DecreaseScoreToWin()
+    {
+        if (scoreToWin > 0)
+        {
+            scoreToWin -= 100;
+        }
+    }
+
+    public void IncreaseMovesAvailable()
+    {
+        movesAvailable++;
+    }
+    public void DecreaseMovesAvailable()
+    {
+        if (movesAvailable > 0)
+        {
+            movesAvailable--;
         }
     }
 

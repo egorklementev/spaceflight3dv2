@@ -6,9 +6,9 @@ using System.IO;
 /// </summary>
 public static class SaveUnit {
 
-    public static void SaveLevel(EditorParams pu, EditorLogic lu, int slotNumber)
+    public static void SaveLevel(EditorParams pu, EditorLogic lu, int slotNumber, string path)
     {
-        string filepath = Application.streamingAssetsPath + "/Levels/Editor/level_" + slotNumber.ToString() + ".json";
+        string filepath = Application.streamingAssetsPath + path + "level_" + slotNumber.ToString() + ".json";
         
         LevelData ld = new LevelData(pu, lu);
 
@@ -17,10 +17,10 @@ public static class SaveUnit {
         File.WriteAllText(filepath, jsonData);
     }
 
-    public static LevelData LoadLevel(int slotNumber)
+    public static LevelData LoadLevel(int slotNumber, string path)
     {
         string dataAsJson;
-        string filepath = Application.streamingAssetsPath + "/Levels/Editor/level_" + slotNumber.ToString() + ".json";        
+        string filepath = Application.streamingAssetsPath + path + "level_" + slotNumber.ToString() + ".json";        
             
         try
         {

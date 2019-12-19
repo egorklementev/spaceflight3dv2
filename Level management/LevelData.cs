@@ -24,6 +24,13 @@ public class LevelData {
     public int bonusPercentage;
     public int energyPercentage;
 
+    // Condition 1: by reaching some score
+    // Condition 2: by clearing the board
+    public int winCondition;
+    public int timeAvailable;
+    public int scoreToWin;
+    public int movesAvailable;
+
     public LevelData(EditorParams pu, EditorLogic lu)
     {
         gridSizeX = (int) pu.gridSize.x;
@@ -59,5 +66,10 @@ public class LevelData {
 
         bonusPercentage = pu.bonusesPercentage;
         energyPercentage = pu.energyPercentage;
+
+        winCondition = pu.winCondition;
+        timeAvailable = pu.timeAvailable;
+        scoreToWin = pu.scoreToWin;
+        movesAvailable = pu.movesAvailable;
     }
 }

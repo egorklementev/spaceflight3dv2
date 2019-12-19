@@ -69,13 +69,13 @@ public class HangarManager : MonoBehaviour {
 
         buyButton.interactable = !GameDataManager.instance.rocketData[selectedRocket].purchased;
 
-        UpdateBuffs();
-    }
-    
+        Invoke("UpdateBuffs", 0.1f);
+    }       
+
     private void Update()
     {
         int metal = GameDataManager.instance.generalData.metal;
-        int maxMetal = GameDataManager.instance.generalData.metalUpgrade * GameDataManager.instance.resPerStorageUpg;
+        int maxMetal = GameDataManager.instance.generalData.metalUpgrade * GameDataManager.instance.resPerStorageUpgMetal;
         metalText.text = metal + "/" + maxMetal;
         float metalBarLength = .925f * underlayLength * ((float)metal / maxMetal);
         metalBar.sizeDelta = new Vector2(metalBarLength, metalBar.sizeDelta.y);
@@ -200,18 +200,20 @@ public class HangarManager : MonoBehaviour {
     {
         selectedUpgrade = upgID;
 
-        RocketData rd = GameDataManager.instance.rocketData[selectedRocket];
-
         int level = 0;
+        float oldBonus = 0.0f;
+        float newBonus = 0.0f;
         int resPerUpg = 0;
-        float buffPerUpg = 0f;
+
+        RocketData rd = GameDataManager.instance.rocketData[selectedRocket];
 
         switch (upgID)
         {
             case 1: // Engine
                 level = rd.engineLevel;
+                oldBonus = GameDataManager.instance.GetEngineBonus(selectedRocket) * 100f;
+                newBonus = GameDataManager.instance.GetEngineBonus(selectedRocket, rd.engineLevel + 1) * 100f;
                 resPerUpg = GameDataManager.instance.resPerEngineUpg;
-                buffPerUpg = GameDataManager.instance.buffPerEngineUpg;
 
                 upgradeTitle.text = LocalizationManager.instance.GetLocalizedValue("hangar_engine_upg_question");
                 upgradeLevel.text = LocalizationManager.instance.GetLocalizedValue("hangar_current_upgrade") + 
@@ -227,8 +229,9 @@ public class HangarManager : MonoBehaviour {
                 break;
             case 2: // Sheathing
                 level = rd.sheathingLevel;
+                oldBonus = GameDataManager.instance.GetSheathingBonus(selectedRocket) * 100f;
+                newBonus = GameDataManager.instance.GetSheathingBonus(selectedRocket, rd.sheathingLevel + 1) * 100f;
                 resPerUpg = GameDataManager.instance.resPerSheathingUpg;
-                buffPerUpg = GameDataManager.instance.buffPerSheathingUpg;
 
                 upgradeTitle.text = LocalizationManager.instance.GetLocalizedValue("hangar_sheathing_upg_question");
                 upgradeLevel.text = LocalizationManager.instance.GetLocalizedValue("hangar_current_upgrade") +
@@ -244,8 +247,9 @@ public class HangarManager : MonoBehaviour {
                 break;
             case 3: // Frame
                 level = rd.frameLevel;
+                oldBonus = GameDataManager.instance.GetFrameBonus(selectedRocket) * 100f;
+                newBonus = GameDataManager.instance.GetFrameBonus(selectedRocket, rd.frameLevel + 1) * 100f;
                 resPerUpg = GameDataManager.instance.resPerFrameUpg;
-                buffPerUpg = GameDataManager.instance.buffPerFrameUpg;
 
                 upgradeTitle.text = LocalizationManager.instance.GetLocalizedValue("hangar_frame_upg_question");
                 upgradeLevel.text = LocalizationManager.instance.GetLocalizedValue("hangar_current_upgrade") +
@@ -264,25 +268,21 @@ public class HangarManager : MonoBehaviour {
         upgradeImage.sprite = upgradeSprites[upgID - 1];
 
         upgradePrice.text = ((level + selectedRocket + 1) * resPerUpg).ToString();
-        upgradeOldBuff.text = "+ " + ((level - 1) * buffPerUpg).ToString() + "%";
-        upgradeNewBuff.text = "+ " + (level * buffPerUpg).ToString() + "%";
+        upgradeOldBuff.text = (upgID == 1 ? "- " : "+ ") + oldBonus.ToString() + "%";
+        upgradeNewBuff.text = (upgID == 1 ? "- " : "+ ") + newBonus.ToString() + "%";
     }
 
     private void UpdateBuffs()
     {
         RocketData rd = GameDataManager.instance.rocketData[selectedRocket];
 
-        int engineLevel = rd.engineLevel;
-        int sheathingLevel = rd.sheathingLevel;
-        int frameLevel = rd.frameLevel;
+        float engineBonus = GameDataManager.instance.GetEngineBonus(selectedRocket) * 100f;
+        float sheathingBonus = GameDataManager.instance.GetSheathingBonus(selectedRocket) * 100f;
+        float frameBonus = GameDataManager.instance.GetFrameBonus(selectedRocket) * 100f;
 
-        float buffPerEngineUpg = GameDataManager.instance.buffPerEngineUpg;
-        float buffPerSheathingUpg = GameDataManager.instance.buffPerSheathingUpg;
-        float buffPerFrameUpg = GameDataManager.instance.buffPerFrameUpg;
-
-        enginePercent.text = "+ " + ((engineLevel - 1) * buffPerEngineUpg).ToString() + "%";
-        sheathingPercent.text = "+ " + ((sheathingLevel - 1) * buffPerSheathingUpg).ToString() + "%";
-        framePercent.text = "+ " + ((frameLevel - 1) * buffPerFrameUpg).ToString() + "%";
+        enginePercent.text = "- " + engineBonus.ToString() + "%";
+        sheathingPercent.text = "+ " + sheathingBonus.ToString() + "%";
+        framePercent.text = "+ " + frameBonus.ToString() + "%";
 
         foreach (Transform child in engineTitle)
         {

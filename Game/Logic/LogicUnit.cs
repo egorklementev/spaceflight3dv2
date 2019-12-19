@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// A class performing all logic cheks, computations and actions in the game
@@ -20,6 +21,16 @@ public class LogicUnit : MonoBehaviour {
     public bool readyToSwap = false;
     [HideInInspector]
     public int suboptimalMoves; // Number of energy available
+    [HideInInspector]
+    public float timeLeft = 0;
+    [HideInInspector]
+    public int movesLeft = 0;
+    [HideInInspector]
+    public bool checkTime = false;
+    [HideInInspector]
+    public bool checkMoves = false;
+    [HideInInspector]
+    public int score = 0;
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
@@ -31,7 +42,15 @@ public class LogicUnit : MonoBehaviour {
 
     private bool initialSpawnHappened = false;
 
+    private int collectedMetal = 0;
+    private int collectedFuel = 0;
+    private int collectedEnergy = 0;
+
+    private List<int> colorsMetal;
+    private List<int> colorsFuel;
+
     private void Awake() {        
+
         gSizeX = (int)pu.gridSize.x;
         gSizeY = (int)pu.gridSize.y;
 
@@ -51,6 +70,9 @@ public class LogicUnit : MonoBehaviour {
 
     private void Update ()
     {
+        if (checkTime && !iu.IsGameOver())
+            timeLeft -= Time.deltaTime;
+
         if (gu.WorkingObjs == 0)
         {
             if (needToCheck)
@@ -58,10 +80,59 @@ public class LogicUnit : MonoBehaviour {
                 CheckGemGrid();
                 FillGemGrid();
             }
+
+            // Defeat
             if (suboptimalMoves <= 0)
             {
+                if (!checkTime && !checkMoves)
+                {
+                    UpdateResults(true);
+                    gu.DrawEndScreen(true);
+                    iu.SetGameOver();
+                }
+                else
+                {
+                    UpdateResults(false);
+                    gu.DrawEndScreen(false);
+                    iu.SetGameOver();
+                }
+
+            }
+            if (((checkTime && timeLeft <= 0) || (checkMoves && movesLeft <= 0)) && score < pu.scoreToWin)
+            {
+                UpdateResults(false);
                 gu.DrawEndScreen(false);
-                iu.SetGameOver(); // Disable input
+                iu.SetGameOver();
+
+            } else {
+                // Victory
+                if (pu.winCondition - 1 == (int)ParamUnit.WinCondition.FIELD_IS_EMPTY)
+                {
+                    int nonEmpty = 0;
+                    foreach (Cell c in grid)
+                    {
+                        if (!c.IsEmpty())
+                        {
+                            nonEmpty++;
+                        }
+                    }
+                    if (nonEmpty == 0)
+                    {
+                        UpdateResults(true);
+                        gu.DrawEndScreen(true);
+                        iu.SetGameOver();
+                    }
+                }
+
+                if (pu.winCondition - 1 == (int)ParamUnit.WinCondition.SCORE_REACHED)
+                {
+                    if (score >= pu.scoreToWin && ((checkTime && timeLeft <= 0) || (checkMoves && movesLeft <= 0)))
+                    {
+                        UpdateResults(true);
+                        gu.DrawEndScreen(true);
+                        iu.SetGameOver();
+                    }
+                }
             }
         }
 	}
@@ -116,6 +187,7 @@ public class LogicUnit : MonoBehaviour {
             {
                 case (int)ParamUnit.Bonus.METEOR:
                     gu.ActivateMeteorBonus(x, y);
+                    score += 10;
                     break;
                 case (int)ParamUnit.Bonus.SAME_COLOR:
                     if (!bonusIsWorking)
@@ -135,32 +207,50 @@ public class LogicUnit : MonoBehaviour {
                             }
                         }
                     }
+                    score += 10;
                     bonusIsWorking = false;
                     break;
                 case (int)ParamUnit.Bonus.ENERGY:
                     IncreaseSuboptimal();
+                    score += 10;
                     break;
                 case (int)ParamUnit.Bonus.ICE_1:
                     needToDestroy = false;
                     grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ICE_2;
                     gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    score -= 5;
                     break;
                 case (int)ParamUnit.Bonus.ICE_2:
                     needToDestroy = false;
                     grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ICE_3;
                     gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    score -= 5;
                     break;
                 case (int)ParamUnit.Bonus.ICE_3:
                     needToDestroy = false;
                     grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.NONE;
                     gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
+                    score -= 5;
                     break;
             }            
         }
 
         if (needToDestroy)
         {
-            grid[x, y].Gem = null;
+            if (grid[x, y].Gem != null)
+            {
+                if (colorsMetal.Contains(grid[x, y].Gem.Color))
+                {
+                    collectedMetal++;
+                }
+                if (colorsFuel.Contains(grid[x, y].Gem.Color))
+                {
+                    collectedFuel++;
+                }
+                score += 10;
+            }
+
+            grid[x, y].Gem = null;          
         }
         needToCheck = true;
     }
@@ -382,7 +472,43 @@ public class LogicUnit : MonoBehaviour {
     public void UpdateDataAfterLoading()
     {
         gSizeX = (int)pu.gridSize.x;
-        gSizeY = (int)pu.gridSize.y;        
+        gSizeY = (int)pu.gridSize.y;
+
+        float timeBuff = GameDataManager.instance.GetSheathingBonus();
+
+        timeLeft = pu.timeAvailable * (1f + (timeBuff) / 100f); 
+        movesLeft = pu.movesAvailable;
+        checkTime = timeLeft != 0;
+        checkMoves = movesLeft != 0;
+        if (checkTime)
+        {
+            timeLeft += 3f; // +3 for the initial animation
+        }
+    }
+
+    public void ComputeResourceColors()
+    {
+        int metal = pu.colorsAvailable / 2;
+        int fuel = pu.colorsAvailable - metal;
+
+        colorsMetal = new List<int>();
+        colorsFuel = new List<int>();
+
+        List<int> list = new List<int>(pu.colorVector);
+
+        for (int i = 0; i < metal; i++)
+        {
+            int index = Random.Range(0, list.Count);
+            colorsMetal.Add(list[index]);
+            list.RemoveAt(index);            
+        }
+
+        for (int i = 0; i < fuel; i++)
+        {
+            int index = Random.Range(0, list.Count);
+            colorsFuel.Add(list[index]);
+            list.RemoveAt(index);
+        }
     }
 
     /// <summary>
@@ -413,6 +539,9 @@ public class LogicUnit : MonoBehaviour {
         {
             gu.SwitchEnergy(suboptimalMoves);
             suboptimalMoves++;
+        } else
+        {
+            collectedEnergy++;
         }
     }
     private void DecreaseSubpotimal()
@@ -435,5 +564,47 @@ public class LogicUnit : MonoBehaviour {
             g1.Bonus != (int)ParamUnit.Bonus.OBSTACLE &&
             g2.Bonus != (int)ParamUnit.Bonus.OBSTACLE
             );
+    }
+
+    private void UpdateResults(bool isVictory)
+    {
+        ResultScreenManager.isVictory = isVictory;
+        ResultScreenManager.scoreToShow = score;
+        ResultScreenManager.timeToShow = (int) (pu.timeAvailable - timeLeft);
+        ResultScreenManager.movesToShow = pu.movesAvailable - movesLeft;
+
+        // Update maxScore
+        int maxScore = GameDataManager.instance.generalData.maxScore;
+        if (score > maxScore)
+        {
+            GameDataManager.instance.generalData.maxScore = score;
+            maxScore = score;
+        }
+
+        float generalBuff = maxScore == 0 ? 1f : 1f + (score / maxScore) / 2;
+        if (checkTime)
+        {
+            generalBuff += timeLeft / pu.timeAvailable;
+        }
+        if (checkMoves)
+        {
+            generalBuff += (float) movesLeft / pu.movesAvailable;
+        }
+
+        float rocketBuff = 1f + GameDataManager.instance.GetFrameBonus();
+
+        float planetBuff = 1f + (float) GameDataManager.instance.generalData.selectedPlanet / GameDataManager.instance.planetNumber / 5f;
+
+        ResultScreenManager.collectedMetal = Mathf.RoundToInt(collectedMetal * rocketBuff * generalBuff * planetBuff);
+        ResultScreenManager.collectedFuel = Mathf.RoundToInt(collectedFuel * rocketBuff * generalBuff * planetBuff);
+        ResultScreenManager.collectedEnergy = Mathf.RoundToInt(collectedEnergy * rocketBuff * generalBuff * planetBuff);
+
+        if (!isVictory)
+        {
+            ResultScreenManager.collectedMetal /= 3;
+            ResultScreenManager.collectedFuel /= 3;
+            ResultScreenManager.collectedEnergy /= 3;
+        }
+
     }
 }
