@@ -135,9 +135,9 @@ public class ControlTowerManager : MonoBehaviour {
         GameDataManager.instance.SaveToDataFile("/PlanetData/planet_" + localData.index.ToString() + ".json", localData);
     }
 
-    private float CalculateFuelConsumption()
+    private int CalculateFuelConsumption()
     {
-        return GameDataManager.instance.planetData[selectedPlanet].fuelToReach * (1f - GameDataManager.instance.GetEngineBonus());
+        return (int)(GameDataManager.instance.planetData[selectedPlanet].fuelToReach * (1f - GameDataManager.instance.GetEngineBonus()));
     }
 
 }

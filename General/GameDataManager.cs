@@ -11,6 +11,10 @@ public class GameDataManager : MonoBehaviour {
     public int resPerStorageUpgMetal = 25;
     public int resPerStorageUpgFuel = 50;
     public int resPerStorageUpgEnergy = 5;
+
+    public int costPerStorageUpgEnergy = 50;
+    public int costPerStorageUpgMetal = 25;
+    public int costPerStorageUpgFuel = 2;
     [Space(10)]
 
     public int rocketNumber = 6;
@@ -129,7 +133,6 @@ public class GameDataManager : MonoBehaviour {
 
         return dataObj;
     }
-
     /// <summary>
     /// Saves data object to the file in the streaming assets
     /// </summary>
@@ -144,7 +147,8 @@ public class GameDataManager : MonoBehaviour {
 
         File.WriteAllText(filePath, jsonData);
     }
-    
+  
+
     /// <summary>
     /// Function for addition of energy in the data. In case if old_energy + energy is bigger than max_energy, energy amount will be assign to the max_energy.
     /// </summary>
@@ -163,7 +167,6 @@ public class GameDataManager : MonoBehaviour {
             return false;
         }
     }
-
     /// <summary>
     /// Function for consuming of energy in the data. In case if old_energy - energy is less than zero, nothing happens.
     /// </summary>
@@ -181,7 +184,6 @@ public class GameDataManager : MonoBehaviour {
             return false;
         }
     }
-
     /// <summary>
     /// Function for addition of metal in the data. In case if old_metal + metal is bigger than max_metal, energy amount will be assign to the max_metal.
     /// </summary>
@@ -200,7 +202,6 @@ public class GameDataManager : MonoBehaviour {
             return false;
         }
     }
-
     /// <summary>
     /// Function for consuming of metal in the data. In case if old_metal - metal is less than zero, nothing happens.
     /// </summary>
@@ -218,7 +219,6 @@ public class GameDataManager : MonoBehaviour {
             return false;
         }
     }
-
     /// <summary>
     /// Function for addition of fuel in the data. In case if old_fuel + fuel is bigger than max_fuel, fuel amount will be assign to the max_fuel.
     /// </summary>
@@ -237,7 +237,6 @@ public class GameDataManager : MonoBehaviour {
             return false;
         }
     }
-
     /// <summary>
     /// Function for consuming of fuel in the data. In case if old_fuel - fuel is less than zero, nothing happens.
     /// </summary>
@@ -255,7 +254,22 @@ public class GameDataManager : MonoBehaviour {
             return false;
         }
     }
-    
+
+
+    public int GetEnergyStorageUpgradeCost()
+    {
+        return (int)(costPerStorageUpgEnergy * 1.2f * generalData.energyUpgrade);
+    }
+    public int GetMetalStorageUpgradeCost()
+    {
+        return (int)(costPerStorageUpgMetal * 1.15f * generalData.metalUpgrade);
+    }
+    public int GetFuelStorageUpgradeCost()
+    {
+        return (int)(costPerStorageUpgFuel * 1.1f * generalData.fuelUpgrade);
+    }
+
+
     public float GetEngineBonus(int rocketId, int level)
     {
         if (rocketId == -1)
@@ -304,6 +318,7 @@ public class GameDataManager : MonoBehaviour {
     {
         return GetFrameBonus(generalData.selectedRocket);
     }
+
 
     private void DebugResourcesIncreaser()
     {

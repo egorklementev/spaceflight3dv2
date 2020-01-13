@@ -87,13 +87,13 @@ public class PortUI : MonoBehaviour {
     private void Update () {
         
         // Resource variables
-        int energy = GameDataManager.instance.generalData.energy;
+        float energy = GameDataManager.instance.generalData.energy;
         int maxEnergy = GameDataManager.instance.generalData.energyUpgrade * GameDataManager.instance.resPerStorageUpgEnergy;
 
-        int metal = GameDataManager.instance.generalData.metal;        
+        float metal = GameDataManager.instance.generalData.metal;        
         int maxMetal = GameDataManager.instance.generalData.metalUpgrade * GameDataManager.instance.resPerStorageUpgMetal;
 
-        int fuel = GameDataManager.instance.generalData.fuel;
+        float fuel = GameDataManager.instance.generalData.fuel;
         int maxFuel = GameDataManager.instance.generalData.fuelUpgrade * GameDataManager.instance.resPerStorageUpgFuel;
 
         // Text update
@@ -102,13 +102,13 @@ public class PortUI : MonoBehaviour {
         fuelText.text = fuel + "/" + maxFuel;
 
         // Bar length update
-        float energyBarLength = .925f * underlayLength * Mathf.Min(1f, (float)energy / maxEnergy);
+        float energyBarLength = .925f * underlayLength * Mathf.Min(1f, energy / maxEnergy);
         energyBar.sizeDelta = new Vector2(energyBarLength, energyBar.sizeDelta.y);
 
-        float metalBarLength = .925f * underlayLength * Mathf.Min(1f, (float)metal / maxMetal);
+        float metalBarLength = .925f * underlayLength * Mathf.Min(1f, metal / maxMetal);
         metalBar.sizeDelta = new Vector2(metalBarLength, metalBar.sizeDelta.y);
 
-        float fuelBarLength = .925f * underlayLength * Mathf.Min(1f, (float)fuel / maxFuel);
+        float fuelBarLength = .925f * underlayLength * Mathf.Min(1f, fuel / maxFuel);
         fuelBar.sizeDelta = new Vector2(fuelBarLength, fuelBar.sizeDelta.y);
 
     }

@@ -18,6 +18,10 @@ public class ResultScreenManager : MonoBehaviour {
     public TextMeshProUGUI metalText;
     public TextMeshProUGUI fuelText;
     public TextMeshProUGUI energyText;
+    [Space(10)]
+
+    public GameObject newPlanetNotificationText;
+    public GameObject newFactNotificationText;
 
     public static int scoreToShow = 0;
     public static int timeToShow = 0;
@@ -52,17 +56,28 @@ public class ResultScreenManager : MonoBehaviour {
         {
             levelTitle.text = LocalizationManager.instance.GetLocalizedValue("results_level") + curLevel +
                 LocalizationManager.instance.GetLocalizedValue("results_level_complete");
+
             if (rocketId != -1) {
 
+                // Unlock next level
                 if (levelId <= GameDataManager.instance.planetData[planetId].levelNum)
                     GameDataManager.instance.planetData[planetId].levelsFinished++;
 
+                // New planet reached
                 if (GameDataManager.instance.planetData[planetId].levelsFinished == GameDataManager.instance.planetData[planetId].levelNum
                     && planetId + 1 == GameDataManager.instance.generalData.planetsReached
                     && planetId + 1 < GameDataManager.instance.planetNumber)
                 {
                     GameDataManager.instance.generalData.planetsReached++;
-                    // TODO: Show notification of new planet reaching
+                    newPlanetNotificationText.SetActive(true);
+                    newPlanetNotificationText.GetComponent<Animator>().Play("Change size up");
+                }
+
+                if (levelId - 4 % 10 == 0)
+                {
+                    GameDataManager.instance.generalData.unlockedFacts++;
+                    newFactNotificationText.SetActive(true);
+                    newFactNotificationText.GetComponent<Animator>().Play("Change size down");
                 }
             }
         } else
@@ -83,16 +98,17 @@ public class ResultScreenManager : MonoBehaviour {
 
         if (rocketId != -1)
         {
-            GameDataManager.instance.rocketData[rocketId].purchased = false;
+            if (rocketId != 0) // First rocket is always available
+                GameDataManager.instance.rocketData[rocketId].purchased = false;
             GameDataManager.instance.AddMetal(collectedMetal);
             GameDataManager.instance.AddFuel(collectedFuel);
             GameDataManager.instance.AddEnergy(collectedEnergy);
 
             metalText.text = collectedMetal.ToString();
             fuelText.text = collectedFuel.ToString();
-            energyText.text = collectedEnergy.ToString();
+            energyText.text = collectedEnergy.ToString();            
         }
-        GameDataManager.instance.generalData.selectedRocket = -1;
+        GameDataManager.instance.generalData.selectedRocket = -1;        
     }
 
 }

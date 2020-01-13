@@ -82,6 +82,10 @@ public class PortInput : MonoBehaviour {
                                 PortUI.camPos = mainCamera.transform.position;
                                 fm.SetLevel(6);
                                 break;
+                            case "SRI":
+                                PortUI.camPos = mainCamera.transform.position;
+                                fm.SetLevel(8);
+                                break;
                         }
                     }
                 }
@@ -106,6 +110,10 @@ public class PortInput : MonoBehaviour {
                             case "Tower":
                                 PortUI.camPos = mainCamera.transform.position;
                                 fm.SetLevel(6);
+                                break;
+                            case "SRI":
+                                PortUI.camPos = mainCamera.transform.position;
+                                fm.SetLevel(8);
                                 break;
                         }
                     }

@@ -573,6 +573,10 @@ public class LogicUnit : MonoBehaviour {
         ResultScreenManager.timeToShow = (int) (pu.timeAvailable - timeLeft);
         ResultScreenManager.movesToShow = pu.movesAvailable - movesLeft;
 
+        int planetId = GameDataManager.instance.generalData.selectedPlanet;
+        int levelId = planetId != -1 ? GameDataManager.instance.planetData[planetId].levelsFinished + 1 : -1;
+        bool isEndless = levelId > GameDataManager.instance.planetData[planetId].levelNum;
+
         // Update maxScore
         int maxScore = GameDataManager.instance.generalData.maxScore;
         if (score > maxScore)
@@ -588,7 +592,7 @@ public class LogicUnit : MonoBehaviour {
         }
         if (checkMoves)
         {
-            generalBuff += (float) movesLeft / pu.movesAvailable;
+            generalBuff += (float) movesLeft / pu.movesAvailable + 5f;
         }
 
         float rocketBuff = 1f + GameDataManager.instance.GetFrameBonus();
@@ -601,9 +605,16 @@ public class LogicUnit : MonoBehaviour {
 
         if (!isVictory)
         {
-            ResultScreenManager.collectedMetal /= 3;
-            ResultScreenManager.collectedFuel /= 3;
-            ResultScreenManager.collectedEnergy /= 3;
+            ResultScreenManager.collectedMetal /= 5;
+            ResultScreenManager.collectedFuel /= 5;
+            ResultScreenManager.collectedEnergy /= 5;
+        }
+
+        if (isEndless)
+        {
+            ResultScreenManager.collectedMetal /= 10;
+            ResultScreenManager.collectedFuel /= 10;
+            ResultScreenManager.collectedEnergy /= 10;
         }
 
     }

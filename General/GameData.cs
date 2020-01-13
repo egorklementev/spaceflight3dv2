@@ -19,5 +19,6 @@ public class GameData {
     public int selectedPlanet; // A planet that was selected (index)
 
     public int maxScore;
+    public int unlockedFacts;
     
 }
