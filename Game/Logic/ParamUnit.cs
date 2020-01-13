@@ -25,6 +25,7 @@ public class ParamUnit : MonoBehaviour {
     public int maximumEnergy = 3;
     public bool spawnNewGems = true;
     public bool spawnEnergy = true;
+    public int scoreUnit = 10;
     [Space(10)]
 
     [Header("Bonus params")]

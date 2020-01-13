@@ -177,9 +177,10 @@ public class LogicUnit : MonoBehaviour {
     /// </summary>
     /// <param name="x">X-pos of the gem to be destroyed</param>
     /// <param name="y">Y-pos of the gem to be destroyed</param>
-    public void DestroyGem(int x, int y)
+    public int DestroyGem(int x, int y)
     {
         bool needToDestroy = true;
+        int localScore = 0;
 
         if (grid[x, y].Gem.IsBonus())
         {
@@ -187,7 +188,7 @@ public class LogicUnit : MonoBehaviour {
             {
                 case (int)ParamUnit.Bonus.METEOR:
                     gu.ActivateMeteorBonus(x, y);
-                    score += 10;
+                    localScore += pu.scoreUnit;
                     break;
                 case (int)ParamUnit.Bonus.SAME_COLOR:
                     if (!bonusIsWorking)
@@ -202,35 +203,35 @@ public class LogicUnit : MonoBehaviour {
                                 if (!grid[_x, _y].IsEmpty() && grid[_x, _y].Gem.Color == color)
                                 {
                                     gu.DestroyGem(_x, _y, color);
-                                    DestroyGem(_x, _y);
+                                    localScore += DestroyGem(_x, _y);
                                 }
                             }
                         }
                     }
-                    score += 10;
+                    localScore += pu.scoreUnit;
                     bonusIsWorking = false;
                     break;
                 case (int)ParamUnit.Bonus.ENERGY:
                     IncreaseSuboptimal();
-                    score += 10;
+                    localScore += pu.scoreUnit;
                     break;
                 case (int)ParamUnit.Bonus.ICE_1:
                     needToDestroy = false;
                     grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ICE_2;
                     gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
-                    score -= 5;
+                    localScore += pu.scoreUnit / 2;
                     break;
                 case (int)ParamUnit.Bonus.ICE_2:
                     needToDestroy = false;
                     grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.ICE_3;
                     gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
-                    score -= 5;
+                    localScore += pu.scoreUnit / 2;
                     break;
                 case (int)ParamUnit.Bonus.ICE_3:
                     needToDestroy = false;
                     grid[x, y].Gem.Bonus = (int)ParamUnit.Bonus.NONE;
                     gu.RespawnGem(x, y, grid[x, y].Gem.Color, grid[x, y].Gem.Bonus);
-                    score -= 5;
+                    localScore += pu.scoreUnit / 2;
                     break;
             }            
         }
@@ -247,12 +248,13 @@ public class LogicUnit : MonoBehaviour {
                 {
                     collectedFuel++;
                 }
-                score += 10;
+                localScore += pu.scoreUnit;
             }
 
             grid[x, y].Gem = null;          
         }
         needToCheck = true;
+        return localScore;
     }
 
     /// <summary>
@@ -329,6 +331,9 @@ public class LogicUnit : MonoBehaviour {
 
         // Destruction
         bool wasDestroyed = false;
+        int scoreToShow = 0;
+        int avgX = 0, avgY = 0;
+        int destrNum = 0;
         for (int x = 0; x < gSizeX; ++x)
         {
             for (int y = 0; y < gSizeY; y++)
@@ -337,13 +342,24 @@ public class LogicUnit : MonoBehaviour {
                     needToDestroy[x, y] &&
                     grid[x, y].Gem.Bonus != (int)ParamUnit.Bonus.OBSTACLE) 
                 {
+                    avgX += x;
+                    avgY += y;
+                    destrNum++;
+
                     wasDestroyed = true;
                     gu.DestroyGem(x, y, grid[x, y].Gem.Color);
-                    DestroyGem(x, y);                    
+                    scoreToShow += DestroyGem(x, y);                    
                 }
             }
         }
-        
+        if (wasDestroyed)
+        {
+            avgX /= destrNum;
+            avgY /= destrNum;
+            gu.SpawnScoreMessage(avgX, avgY, scoreToShow);
+            score += scoreToShow;
+        }
+
         if (iu.wasSwap && !wasDestroyed)
         {
             DecreaseSubpotimal();            

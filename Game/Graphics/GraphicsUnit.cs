@@ -31,6 +31,7 @@ public class GraphicsUnit : MonoBehaviour {
     public TextMeshProUGUI movesText;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI initialMessage;
+    public GameObject popUpPrefab;
     [Space(10)]
 
     [Header("Anchors")]
@@ -43,6 +44,7 @@ public class GraphicsUnit : MonoBehaviour {
     public InputUnit iu;
     public ParamUnit pu;
     public FadeManager fadeManager;
+    public Camera mainCamera;
 
     [HideInInspector]
     public int WorkingObjs { get; set; } // The number of objects that are in a working state, e.g. we should wait for them
@@ -244,6 +246,33 @@ public class GraphicsUnit : MonoBehaviour {
     public void DestroyGem(int x, int y, int color)
     {
         DestroyGem(x, y, color, true);
+    }
+
+    /// <summary>
+    /// Spawns a pop-up text object showing the number of scores a player has got
+    /// </summary>
+    /// <param name="x">X spawn coordinate</param>
+    /// <param name="y">Y spawn coordinate</param>
+    /// <param name="score">A number to be shown</param>
+    public void SpawnScoreMessage(int x, int y, int score)
+    {
+        GameObject popUpObj = Instantiate(popUpPrefab, transform);
+        popUpObj.transform.localPosition = mainCamera.WorldToScreenPoint(GetGraphPos(x - 3, y + 1));
+
+        GameObject popUpText = popUpObj.transform.Find("Pop-up score").gameObject;
+        TextMeshProUGUI textComp = popUpText.GetComponent<TextMeshProUGUI>();
+        textComp.text = score.ToString();
+        float scoreEffect = Mathf.Max((float)score / (pu.sequenceSize * pu.scoreUnit) * .9f, 1f);
+        textComp.fontSize *= scoreEffect;
+        textComp.color = new Color(textComp.color.r, textComp.color.b / scoreEffect, textComp.color.g / scoreEffect);
+        if (Random.Range(0f, 1f) > .5f)
+        {
+            popUpText.GetComponent<Animator>().Play("Pop-up left up");
+        }
+        else
+        {
+            popUpText.GetComponent<Animator>().Play("Pop-up right up");
+        }
     }
 
     /// <summary>
@@ -524,9 +553,7 @@ public class GraphicsUnit : MonoBehaviour {
     {
         WorkingObjs++;
         Vector3 velocity = Vector3.zero; velocity.x += .1f;
-        Vector3 newPosition = transform.position;
-        newPosition.x += (pu.gemSize + pu.gemOffset) * x;
-        newPosition.y += (pu.gemSize + pu.gemOffset) * y;
+        Vector3 newPosition = GetGraphPos(x, y);
         while (velocity.sqrMagnitude > .001f)
         {
             if (gem == null)
@@ -571,7 +598,8 @@ public class GraphicsUnit : MonoBehaviour {
         if (!lu.grid[x, y].IsEmpty())
         {
             DestroyGem(x, y, color);
-            lu.DestroyGem(x, y);
+            int scoreToShow = lu.DestroyGem(x, y);
+            SpawnScoreMessage(x, y, scoreToShow);
         }
             
         // Trail is destroying separately to prevent particles dissapearing
