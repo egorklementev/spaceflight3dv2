@@ -31,6 +31,7 @@ public class GraphicsUnit : MonoBehaviour {
     public TextMeshProUGUI movesText;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI initialMessage;
+    public GameObject comboMessage;
     public GameObject popUpPrefab;
     [Space(10)]
 
@@ -262,7 +263,7 @@ public class GraphicsUnit : MonoBehaviour {
         GameObject popUpText = popUpObj.transform.Find("Pop-up score").gameObject;
         TextMeshProUGUI textComp = popUpText.GetComponent<TextMeshProUGUI>();
         textComp.text = score.ToString();
-        float scoreEffect = Mathf.Max((float)score / (pu.sequenceSize * pu.scoreUnit) * .9f, 1f);
+        float scoreEffect = Mathf.Max(Mathf.Sqrt((float)score * pu.sequenceSize * pu.scoreUnit) / (pu.sequenceSize * pu.scoreUnit) * .9f, 1f);
         textComp.fontSize *= scoreEffect;
         textComp.color = new Color(textComp.color.r, textComp.color.b / scoreEffect, textComp.color.g / scoreEffect);
         if (Random.Range(0f, 1f) > .5f)
@@ -275,6 +276,12 @@ public class GraphicsUnit : MonoBehaviour {
         }
     }
 
+    public void ShowComboMessage(int combo)
+    {
+        comboMessage.GetComponent<TextMeshProUGUI>().text = LocalizationManager.instance.GetLocalizedValue("game_combo") + combo.ToString();
+        comboMessage.GetComponent<Animator>().SetBool("ShowComboMsg", true);
+    }
+    
     /// <summary>
     /// Sends meteor to the chosen position on the grid
     /// </summary>

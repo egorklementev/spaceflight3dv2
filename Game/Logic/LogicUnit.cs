@@ -31,6 +31,8 @@ public class LogicUnit : MonoBehaviour {
     public bool checkMoves = false;
     [HideInInspector]
     public int score = 0;
+    [HideInInspector]
+    public int comboMultiplier = 1;
 
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
@@ -354,10 +356,25 @@ public class LogicUnit : MonoBehaviour {
         }
         if (wasDestroyed)
         {
+            if (!iu.wasSwap)
+            {
+                if (comboMultiplier == 1)
+                    comboMultiplier = 2;
+                else
+                    comboMultiplier = (int)(comboMultiplier * 1.5f);
+
+                gu.ShowComboMessage(comboMultiplier);
+            }
+            else
+            {
+                comboMultiplier = 1;
+            }
+
             avgX /= destrNum;
             avgY /= destrNum;
-            gu.SpawnScoreMessage(avgX, avgY, scoreToShow);
-            score += scoreToShow;
+            gu.SpawnScoreMessage(avgX, avgY, scoreToShow * comboMultiplier);
+
+            score += scoreToShow * comboMultiplier;
         }
 
         if (iu.wasSwap && !wasDestroyed)
