@@ -51,6 +51,7 @@ public class SRIManager : MonoBehaviour {
             instance.GetComponent<Image>().color = dataFileColors[i];
             instance.GetComponent<DataFile>().factId = i;
             instance.GetComponent<DataFile>().faController = faController;
+            instance.name = "Data file (" + i.ToString() + ")";
         }
 
 	}
