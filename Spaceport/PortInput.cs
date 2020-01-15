@@ -2,14 +2,22 @@
 
 public class PortInput : MonoBehaviour {
 
-    public float scrollBound = 7.5f;
+    public float scrollBoundXLeft = 7.5f;
+    public float scrollBoundXRight = 7.5f;
+    public float scrollBoundYTop = 7.5f;
+    public float scrollBoundYBot = 7.5f;
     public float scrollSpeed = .5f;
+    public float scrollZoomChange = .1f;
+    public float zoomSpeed = .1f;
+    public float camNearestSize = 8.5f;
+    public float camFarthestSize = 25f;
 
     public FadeManager fm;
-    public Camera mainCamera;    
+    public Camera mainCamera;
 
     private Vector2 previosPosition = new Vector2(-1f,-1f);
-
+    private float touchDistPrev = 0f;
+    private float touchDist = 0f;
     private bool touchMoved = false;
 
     private void Update()
@@ -18,29 +26,87 @@ public class PortInput : MonoBehaviour {
         {
             if (Application.platform == RuntimePlatform.Android)
             {
-                if (Input.touchCount > 0)
+                if (Input.touchCount == 1)
                 {
                     Touch touch = Input.GetTouch(0);
 
                     if (touch.phase == TouchPhase.Moved && previosPosition != new Vector2(-1f, -1f))
                     {
-                        Vector3 initialPos = mainCamera.transform.position;
+                        Vector3 initialPos = mainCamera.transform.localPosition;
 
                         Vector3 deltaPos = new Vector3
                             (
-                            ((touch.position.x - previosPosition.x) - (touch.position.y - previosPosition.y)) * scrollSpeed,
-                            0f,
-                            ((touch.position.x - previosPosition.x) + (touch.position.y - previosPosition.y)) * scrollSpeed
+                            (touch.position.x - previosPosition.x) * scrollSpeed,
+                            (touch.position.y - previosPosition.y) * scrollSpeed,
+                            0f
                             );
 
+                        Vector3 newPos = initialPos - deltaPos;
 
-                        bool cond1 = mainCamera.transform.position.z < -Mathf.Abs(mainCamera.transform.position.x) + scrollBound;
-                        bool cond2 = mainCamera.transform.position.z > Mathf.Abs(mainCamera.transform.position.x) - scrollBound;
+                        bool condLeft = newPos.x >= -scrollBoundXLeft;
+                        bool condRight = newPos.x <= scrollBoundXRight;
+                        bool condTop = newPos.y <= scrollBoundYTop;
+                        bool condBot = newPos.y >= -scrollBoundYBot;
 
-                        if (cond1 && cond2)
-                        {
-                            mainCamera.transform.position = Vector3.Lerp(initialPos, initialPos - deltaPos, Time.deltaTime);
-                        }
+                        // Left bound crossing
+                        if (!condLeft && condTop && condBot)
+                            newPos = new Vector3(
+                                -scrollBoundXLeft,
+                                newPos.y,
+                                newPos.z
+                                );
+                        // Right bound crossing
+                        if (!condRight && condTop && condBot)
+                            newPos = new Vector3(
+                                scrollBoundXRight,
+                                newPos.y,
+                                newPos.z
+                                );
+                        // Top bound crossing
+                        if (condRight && condLeft && !condTop)
+                            newPos = new Vector3(
+                                newPos.x,
+                                scrollBoundYTop,
+                                newPos.z
+                                );
+                        // Bottom bound crossing
+                        if (condRight && condLeft && !condBot)
+                            newPos = new Vector3(
+                                newPos.x,
+                                -scrollBoundYBot,
+                                newPos.z
+                                );
+
+                        // Upper-left corner crossing
+                        if (!condLeft && !condTop)
+                            newPos = new Vector3(
+                                -scrollBoundXLeft,
+                                scrollBoundYTop,
+                                newPos.z
+                                );
+                        // Upper-right corner crossing
+                        if (!condRight && !condTop)
+                            newPos = new Vector3(
+                                scrollBoundXRight,
+                                scrollBoundYTop,
+                                newPos.z
+                                );
+                        // Bottom-left corner crossing
+                        if (!condLeft && !condBot)
+                            newPos = new Vector3(
+                                -scrollBoundXLeft,
+                                -scrollBoundYBot,
+                                newPos.z
+                                );
+                        // Bottom-right corner crossing
+                        if (!condRight && !condBot)
+                            newPos = new Vector3(
+                                scrollBoundXRight,
+                                -scrollBoundYBot,
+                                newPos.z
+                                );
+
+                        mainCamera.transform.localPosition = newPos;
 
                         previosPosition.x = touch.position.x;
                         previosPosition.y = touch.position.y;
@@ -75,24 +141,75 @@ public class PortInput : MonoBehaviour {
                         switch (hitInfo.transform.gameObject.name)
                         {
                             case "Hangar":
-                                PortUI.camPos = mainCamera.transform.position;
+                                PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(5);
                                 break;
                             case "Tower":
-                                PortUI.camPos = mainCamera.transform.position;
+                                PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(6);
                                 break;
                             case "SRI":
-                                PortUI.camPos = mainCamera.transform.position;
+                                PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(8);
                                 break;
                         }
                     }
                 }
+
+                // Zoom using two fingers
+                if (Input.touchCount == 2)
+                {
+                    Touch t1 = Input.GetTouch(0);
+                    Touch t2 = Input.GetTouch(1);
+
+                    touchDist = Mathf.Sqrt((t1.position.x - t2.position.x) * (t1.position.x - t2.position.x) + (t1.position.y - t2.position.y) * (t1.position.y - t2.position.y));
+
+                    // Farthest : left 40, right 10, top 50, bot -15
+                    // Nearest  : left 50, right 40, top 75, bot 5
+                    if ((t1.phase == TouchPhase.Moved || t2.phase == TouchPhase.Moved) && touchDistPrev != 0f)
+                    {
+                        if (touchDist - touchDistPrev > 0)
+                        {
+                            if (mainCamera.orthographicSize - zoomSpeed >= camNearestSize)
+                            {
+                                mainCamera.orthographicSize -= zoomSpeed;
+                                scrollSpeed -= scrollZoomChange;
+
+                                // Change bounds since the size of a camera changes
+                                float diff = camFarthestSize - camNearestSize;
+                                scrollBoundXLeft += zoomSpeed * 10f / diff;
+                                scrollBoundXRight += zoomSpeed * 30f / diff;
+                                scrollBoundYTop += zoomSpeed * 25f / diff;
+                                scrollBoundYBot += zoomSpeed * 20f / diff;
+                            }
+                        }
+                        if (touchDist - touchDistPrev < 0)
+                        {
+                            if (mainCamera.orthographicSize + zoomSpeed <= camFarthestSize)
+                            {
+                                mainCamera.orthographicSize += zoomSpeed;
+                                scrollSpeed += scrollZoomChange;
+
+                                // Change bounds since the size of a camera changes
+                                float diff = camFarthestSize - camNearestSize;
+                                scrollBoundXLeft -= zoomSpeed * 10f / diff;
+                                scrollBoundXRight -= zoomSpeed * 30f / diff;
+                                scrollBoundYTop -= zoomSpeed * 25f / diff;
+                                scrollBoundYBot -= zoomSpeed * 20f / diff;
+                            }
+                        }
+                    }
+                    else if (t1.phase == TouchPhase.Ended || t2.phase == TouchPhase.Ended)
+                    {
+                        touchDist = 0f;
+                        touchDistPrev = 0f;
+                    }
+
+                    touchDistPrev = touchDist;
+                }
             }
             else
             {
-
                 if (Input.GetMouseButtonUp(0))
                 {
                     // Taps on buildings
@@ -104,15 +221,15 @@ public class PortInput : MonoBehaviour {
                         switch (hitInfo.transform.gameObject.name)
                         {
                             case "Hangar":
-                                PortUI.camPos = mainCamera.transform.position;
+                                PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(5);
                                 break;
                             case "Tower":
-                                PortUI.camPos = mainCamera.transform.position;
+                                PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(6);
                                 break;
                             case "SRI":
-                                PortUI.camPos = mainCamera.transform.position;
+                                PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(8);
                                 break;
                         }
@@ -124,77 +241,121 @@ public class PortInput : MonoBehaviour {
 
                 if (Input.GetMouseButton(0))
                 {
-
                     if (previosPosition != new Vector2(-1f, -1f))
                     {
-                        Vector3 initialPos = mainCamera.transform.position;
+                        Vector3 initialPos = mainCamera.transform.localPosition;
 
                         Vector3 deltaPos = new Vector3
                             (
-                            ((Input.mousePosition.x - previosPosition.x) - (Input.mousePosition.y - previosPosition.y)) * scrollSpeed,
-                            0f,
-                            ((Input.mousePosition.x - previosPosition.x) + (Input.mousePosition.y - previosPosition.y)) * scrollSpeed
+                            (Input.mousePosition.x - previosPosition.x) * scrollSpeed,
+                            (Input.mousePosition.y - previosPosition.y) * scrollSpeed,
+                            0f
                             );
 
-                        Vector3 newPos = Vector3.Lerp(initialPos, initialPos - deltaPos, Time.deltaTime);
+                        Vector3 newPos = initialPos - deltaPos;
 
-                        bool cond1 = newPos.z < -Mathf.Abs(newPos.x) + scrollBound;
-                        bool cond2 = newPos.z > Mathf.Abs(newPos.x) - scrollBound;
+                        bool condLeft = newPos.x >= -scrollBoundXLeft;
+                        bool condRight = newPos.x <= scrollBoundXRight;
+                        bool condTop = newPos.y <= scrollBoundYTop;
+                        bool condBot = newPos.y >= -scrollBoundYBot;
+                        
+                        // Left bound crossing
+                        if (!condLeft && condTop && condBot)
+                            newPos = new Vector3(
+                                -scrollBoundXLeft,
+                                newPos.y,
+                                newPos.z
+                                );
+                        // Right bound crossing
+                        if (!condRight && condTop && condBot)
+                            newPos = new Vector3(
+                                scrollBoundXRight,
+                                newPos.y,
+                                newPos.z
+                                );
+                        // Top bound crossing
+                        if (condRight && condLeft && !condTop)
+                            newPos = new Vector3(
+                                newPos.x,
+                                scrollBoundYTop,
+                                newPos.z
+                                );
+                        // Bottom bound crossing
+                        if (condRight && condLeft && !condBot)
+                            newPos = new Vector3(
+                                newPos.x,
+                                -scrollBoundYBot,
+                                newPos.z
+                                );
 
-                        if (cond1 && cond2)
-                        {
-                            mainCamera.transform.position = Vector3.Lerp(initialPos, initialPos - deltaPos, Time.deltaTime);
-                        }
-                        //else 
-                        //{
-                        //    // Four cases:                          
-                        //    if      (newPos.x > 0 && newPos.z > 0) // fx > 0 & fz > 0
-                        //    {
-                        //        float a = 1f;
-                        //        float b = 1f;
-                        //        float c = -scrollBound;
-                        //        float d = Mathf.Abs(a * newPos.x + b * newPos.z + c) / Mathf.Sqrt(a * a + b * b);
-                        //        d /= Mathf.Sqrt(2);
-                        //        deltaPos -= new Vector3(d, 0, d);
-                        //    }
-                        //    else if (newPos.x > 0 && newPos.z < 0) // fx > 0 & fz < 0
-                        //    {
-                        //        float a = 1f;
-                        //        float b = -1f;
-                        //        float c = -scrollBound;
-                        //        float d = Mathf.Abs(a * newPos.x + b * newPos.z + c) / Mathf.Sqrt(a * a + b * b);
-                        //        d /= Mathf.Sqrt(2);
-                        //        deltaPos -= new Vector3(d, 0, -d);
-                        //    }
-                        //    else if (newPos.x < 0 && newPos.z > 0) // fx < 0 & fz > 0
-                        //    {
-                        //        float a = 1f;
-                        //        float b = -1f;
-                        //        float c = scrollBound;
-                        //        float d = Mathf.Abs(a * newPos.x + b * newPos.z + c) / Mathf.Sqrt(a * a + b * b);
-                        //        d /= Mathf.Sqrt(2);
-                        //        deltaPos -= new Vector3(-d, 0, d);
-                        //    }
-                        //    else if (newPos.x < 0 && newPos.z < 0) // fx < 0 & fz < 0
-                        //    {
-                        //        float a = 1f;
-                        //        float b = 1f;
-                        //        float c = scrollBound;
-                        //        float d = Mathf.Abs(a * newPos.x + b * newPos.z + c) / Mathf.Sqrt(a * a + b * b);
-                        //        d /= Mathf.Sqrt(2);
-                        //        deltaPos -= new Vector3(-d, 0, -d);
-                        //    }
+                        // Upper-left corner crossing
+                        if (!condLeft && !condTop)
+                            newPos = new Vector3(
+                                -scrollBoundXLeft,
+                                scrollBoundYTop,
+                                newPos.z
+                                );
+                        // Upper-right corner crossing
+                        if (!condRight && !condTop)
+                            newPos = new Vector3(
+                                scrollBoundXRight,
+                                scrollBoundYTop,
+                                newPos.z
+                                );
+                        // Bottom-left corner crossing
+                        if (!condLeft && !condBot)
+                            newPos = new Vector3(
+                                -scrollBoundXLeft,
+                                -scrollBoundYBot,
+                                newPos.z
+                                );
+                        // Bottom-right corner crossing
+                        if (!condRight && !condBot)
+                            newPos = new Vector3(
+                                scrollBoundXRight,
+                                -scrollBoundYBot,
+                                newPos.z
+                                );
 
-                        //    mainCamera.transform.position = Vector3.Lerp(initialPos, initialPos - deltaPos, Time.deltaTime);
-                        //}
-
+                        mainCamera.transform.localPosition = newPos;
                     }
 
                     previosPosition.x = Input.mousePosition.x;
                     previosPosition.y = Input.mousePosition.y;
                 }
+
+                // Zoom using mouse wheel
+                if (Input.mouseScrollDelta.y > 0)
+                {
+                    if (mainCamera.orthographicSize - zoomSpeed >= camNearestSize)
+                    {
+                        mainCamera.orthographicSize -= zoomSpeed;
+                        scrollSpeed -= scrollZoomChange;
+
+                        // Change bounds since the size of a camera changes
+                        float diff = camFarthestSize - camNearestSize;
+                        scrollBoundXLeft += zoomSpeed * 10f / diff;
+                        scrollBoundXRight += zoomSpeed * 30f / diff;
+                        scrollBoundYTop += zoomSpeed * 25f / diff;
+                        scrollBoundYBot += zoomSpeed * 20f / diff;
+                    }
+                }
+                if (Input.mouseScrollDelta.y < 0)
+                {
+                    if (mainCamera.orthographicSize + zoomSpeed <= camFarthestSize)
+                    {
+                        mainCamera.orthographicSize += zoomSpeed;
+                        scrollSpeed += scrollZoomChange;
+
+                        // Change bounds since the size of a camera changes
+                        float diff = camFarthestSize - camNearestSize;
+                        scrollBoundXLeft -= zoomSpeed * 10f / diff;
+                        scrollBoundXRight -= zoomSpeed * 30f / diff;
+                        scrollBoundYTop -= zoomSpeed * 25f / diff;
+                        scrollBoundYBot -= zoomSpeed * 20f / diff;
+                    }
+                }
             }
         }
     }
-
 }
