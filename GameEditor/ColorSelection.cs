@@ -77,6 +77,8 @@ public class ColorSelection : MonoBehaviour {
             StartCoroutine(ScaleGem(colorGrid[currentSelected], new Vector3(normalScale, normalScale, normalScale), scaleSpeed));
             currentSelected = -1;
         }
+
+        MusicManager.instance.PlaySound("Click sound");
     }
 
     private IEnumerator ScaleGem(GameObject gem, Vector3 finalScale, float speed)

@@ -70,6 +70,8 @@ public class HangarManager : MonoBehaviour {
         buyButton.interactable = !GameDataManager.instance.rocketData[selectedRocket].purchased;
 
         Invoke("UpdateBuffs", 0.1f);
+
+        MusicManager.instance.Play("Spaceport theme");
     }       
 
     private void Update()

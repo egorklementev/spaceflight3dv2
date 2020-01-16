@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 public class EditorParams : MonoBehaviour
 {
-
     [Header("Grid params")]
     public Vector2 gridSize;
     public float gemOffsetParam = .3f;
@@ -94,6 +93,8 @@ public class EditorParams : MonoBehaviour
         bonusNames[6] = LocalizationManager.instance.GetLocalizedValue("editor_ice_1");
         bonusNames[7] = LocalizationManager.instance.GetLocalizedValue("editor_ice_2");
         bonusNames[8] = LocalizationManager.instance.GetLocalizedValue("editor_ice_3");
+
+        MusicManager.instance.Play("Menu theme");
     }
 
     public void InitializeOnStart()

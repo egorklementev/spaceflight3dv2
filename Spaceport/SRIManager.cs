@@ -54,6 +54,7 @@ public class SRIManager : MonoBehaviour {
             instance.name = "Data file (" + i.ToString() + ")";
         }
 
+        MusicManager.instance.Play("Spaceport theme");
 	}
 
     void Update()

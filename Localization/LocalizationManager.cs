@@ -16,7 +16,7 @@ public class LocalizationManager : MonoBehaviour {
         {
             instance = this;
 
-            Debug.Log("LOCALIZATION INITIALIZATION");
+            //Debug.Log("LOCALIZATION INITIALIZATION");
 
             if (!GetIsReady())
                 LoadLocalizedText("lang" + Application.systemLanguage + ".json");

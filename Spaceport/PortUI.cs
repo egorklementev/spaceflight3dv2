@@ -69,6 +69,8 @@ public class PortUI : MonoBehaviour {
             {
                 camPos = cam.transform.position;
             }
+
+            MusicManager.instance.Play("Spaceport theme");
         }
         else
         {
@@ -77,11 +79,14 @@ public class PortUI : MonoBehaviour {
             energyBarObj.SetActive(false);
             metalBarObj.SetActive(false);
             fuelBarObj.SetActive(false);
-            cam.transform.position = new Vector3(23, 47, 25);
+            cam.transform.localPosition = new Vector3(20, 38, 0);
             StartCoroutine(ShakeCamera(shakeTime));
             StartCoroutine(LaunchRocket());
             landSmoke.Play();
             trailSmoke.Play();
+
+            MusicManager.instance.Stop("Spaceport theme");
+            MusicManager.instance.PlaySound("Rocket launch sound");
         }
     }
     private void Update () {

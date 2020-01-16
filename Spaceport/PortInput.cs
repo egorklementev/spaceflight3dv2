@@ -223,14 +223,17 @@ public class PortInput : MonoBehaviour {
                             case "Hangar":
                                 PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(5);
+                                MusicManager.instance.PlaySound("Click sound");
                                 break;
                             case "Tower":
                                 PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(6);
+                                MusicManager.instance.PlaySound("Click sound");
                                 break;
                             case "SRI":
                                 PortUI.camPos = mainCamera.transform.localPosition;
                                 fm.SetLevel(8);
+                                MusicManager.instance.PlaySound("Click sound");
                                 break;
                         }
                     }

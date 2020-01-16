@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using TMPro;
+using System.Collections;
 
 public class ResultScreenManager : MonoBehaviour {
 
@@ -108,7 +109,23 @@ public class ResultScreenManager : MonoBehaviour {
             fuelText.text = collectedFuel.ToString();
             energyText.text = collectedEnergy.ToString();            
         }
-        GameDataManager.instance.generalData.selectedRocket = -1;        
+        GameDataManager.instance.generalData.selectedRocket = -1;
+
+        MusicManager.instance.Play("Spaceport theme");
+        StartCoroutine(PlayRocketSound()); 
+    }
+
+    private IEnumerator PlayRocketSound()
+    {
+        float delay = 3f;
+        float timeElapsed = 0f;
+        while (timeElapsed < delay)
+        {
+            timeElapsed += Time.deltaTime;
+            yield return new WaitForEndOfFrame();
+        }
+
+        MusicManager.instance.PlaySound("Rocket flying sound");
     }
 
 }

@@ -108,6 +108,8 @@ public class BonusSelection : MonoBehaviour {
             StartCoroutine(ScaleGem(bonusGrid[currentSelected], new Vector3(normalScale, normalScale, normalScale), scaleSpeed));
             currentSelected = -1;
         }
+
+        MusicManager.instance.PlaySound("Click sound");
     }
     
     private IEnumerator ScaleGem(GameObject gem, Vector3 finalScale, float speed)

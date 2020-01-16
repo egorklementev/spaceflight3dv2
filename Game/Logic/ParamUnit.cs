@@ -109,6 +109,8 @@ public class ParamUnit : MonoBehaviour {
                 LoadLevel("/Levels/Planet_" + (planetId + 1).ToString() + "/", 0); // Endless level
             }
         }
+
+        MusicManager.instance.Play("Game theme");
     }
         
     /// <summary>

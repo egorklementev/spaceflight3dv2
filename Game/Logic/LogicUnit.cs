@@ -34,6 +34,8 @@ public class LogicUnit : MonoBehaviour {
     [HideInInspector]
     public int comboMultiplier = 1;
 
+    private int comboCounter = 0;
+
     private static Vector2 UNSELECTED = new Vector2(-1, -1);
 
     private int gSizeX; // Width of the grid
@@ -363,11 +365,15 @@ public class LogicUnit : MonoBehaviour {
                 else
                     comboMultiplier = (int)(comboMultiplier * 1.5f);
 
+                comboCounter++;
+
                 gu.ShowComboMessage(comboMultiplier);
+                MusicManager.instance.PlaySound("Combo sound (" + (comboCounter <= 7 ? comboCounter : 7).ToString() + ")");
             }
             else
             {
                 comboMultiplier = 1;
+                comboCounter = 0;
             }
 
             avgX /= destrNum;
@@ -375,6 +381,8 @@ public class LogicUnit : MonoBehaviour {
             gu.SpawnScoreMessage(avgX, avgY, scoreToShow * comboMultiplier);
 
             score += scoreToShow * comboMultiplier;
+
+            MusicManager.instance.PlaySound("Gem crash sound (" + Random.Range(1, 4) + ")");
         }
 
         if (iu.wasSwap && !wasDestroyed)

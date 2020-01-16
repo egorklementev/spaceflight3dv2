@@ -32,6 +32,8 @@ public class ControlTowerManager : MonoBehaviour {
         planetMaterial = planet.GetComponent<Renderer>().material;
 
         UpdatePlanetUI();
+
+        MusicManager.instance.Play("Spaceport theme");
     }
 	
 	private void Update () {
