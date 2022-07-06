@@ -17,8 +17,11 @@ public class ResultScreenManager : MonoBehaviour {
     public TextMeshProUGUI timeText;
     public TextMeshProUGUI movesText;
     public TextMeshProUGUI metalText;
+    public TextMeshProUGUI metalBonusText;
     public TextMeshProUGUI fuelText;
+    public TextMeshProUGUI fuelBonusText;
     public TextMeshProUGUI energyText;
+    public TextMeshProUGUI energyBonusText;
     [Space(10)]
 
     public GameObject newPlanetNotificationText;
@@ -31,6 +34,11 @@ public class ResultScreenManager : MonoBehaviour {
     public static int collectedMetal = 0;
     public static int collectedFuel = 0;
     public static int collectedEnergy = 0;
+
+    public static int metalBonus = 0;
+    public static int fuelBonus = 0;
+    public static int energyBonus = 0;
+
 
     public static bool isVictory = true;
 
@@ -81,7 +89,8 @@ public class ResultScreenManager : MonoBehaviour {
                     newFactNotificationText.GetComponent<Animator>().Play("Change size down");
                 }
             }
-        } else
+        }
+        else
         {
             levelTitle.text = LocalizationManager.instance.GetLocalizedValue("results_level") + curLevel +
                 LocalizationManager.instance.GetLocalizedValue("results_level_failed");
@@ -105,9 +114,13 @@ public class ResultScreenManager : MonoBehaviour {
             GameDataManager.instance.AddFuel(collectedFuel);
             GameDataManager.instance.AddEnergy(collectedEnergy);
 
-            metalText.text = collectedMetal.ToString();
-            fuelText.text = collectedFuel.ToString();
-            energyText.text = collectedEnergy.ToString();            
+            metalText.text = (collectedMetal - metalBonus).ToString();
+            fuelText.text = (collectedFuel - fuelBonus).ToString();
+            energyText.text = (collectedEnergy - energyBonus).ToString();
+
+            metalBonusText.text = "+" + metalBonus.ToString();
+            fuelBonusText.text = "+" + fuelBonus.ToString();
+            energyBonusText.text = "+" + energyBonus.ToString();
         }
         GameDataManager.instance.generalData.selectedRocket = -1;
 

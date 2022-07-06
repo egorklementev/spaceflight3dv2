@@ -21,4 +21,6 @@ public class GameData {
     public int maxScore;
     public int unlockedFacts;
     
+	public float soundVolume;
+	public float musicVolume;
 }

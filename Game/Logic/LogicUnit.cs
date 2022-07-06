@@ -96,9 +96,18 @@ public class LogicUnit : MonoBehaviour {
                 }
                 else
                 {
-                    UpdateResults(false);
-                    gu.DrawEndScreen(false);
-                    iu.SetGameOver();
+                    if (score >= pu.scoreToWin)
+                    {
+                        UpdateResults(true);
+                        gu.DrawEndScreen(true);
+                        iu.SetGameOver();
+                    }
+                    else
+                    {
+                        UpdateResults(false);
+                        gu.DrawEndScreen(false);
+                        iu.SetGameOver();
+                    }
                 }
 
             }
@@ -517,7 +526,7 @@ public class LogicUnit : MonoBehaviour {
 
         float timeBuff = GameDataManager.instance.GetSheathingBonus();
 
-        timeLeft = pu.timeAvailable * (1f + (timeBuff) / 100f); 
+        timeLeft = pu.timeAvailable * (1f + timeBuff); 
         movesLeft = pu.movesAvailable;
         checkTime = timeLeft != 0;
         checkMoves = movesLeft != 0;
@@ -643,6 +652,10 @@ public class LogicUnit : MonoBehaviour {
         ResultScreenManager.collectedMetal = Mathf.RoundToInt(collectedMetal * rocketBuff * generalBuff * planetBuff);
         ResultScreenManager.collectedFuel = Mathf.RoundToInt(collectedFuel * rocketBuff * generalBuff * planetBuff);
         ResultScreenManager.collectedEnergy = Mathf.RoundToInt(collectedEnergy * rocketBuff * generalBuff * planetBuff);
+
+        ResultScreenManager.metalBonus = Mathf.RoundToInt(collectedMetal * (rocketBuff - 1f));
+        ResultScreenManager.fuelBonus = Mathf.RoundToInt(collectedFuel * (rocketBuff - 1f));
+        ResultScreenManager.energyBonus = Mathf.RoundToInt(collectedEnergy * (rocketBuff - 1f));
 
         if (!isVictory)
         {

@@ -12,6 +12,9 @@ public class ControlTowerManager : MonoBehaviour {
     public TextMeshProUGUI planetFuel;
     public TextMeshProUGUI planetLevels;
     public TextMeshProUGUI planetCurLevel;
+    public TextMeshProUGUI levelGoal;
+    public TextMeshProUGUI savedFuel;
+    public TextMeshProUGUI savedFuelNumber;
     [Space(10)]
 
     public TextMeshProUGUI fuelBarText;
@@ -21,12 +24,11 @@ public class ControlTowerManager : MonoBehaviour {
 
     public Material planetMaterial;
     public GameObject fuelIcon;
+    public GameObject fuelSavedIcon;
     public MessageText mt;
     public FadeManager fm;
 
-    private PlanetData localData;
-
-    private int selectedPlanet = 0;
+    private static int selectedPlanet = 0;
 
 	private void Awake () {
         planetMaterial = planet.GetComponent<Renderer>().material;
@@ -95,8 +97,9 @@ public class ControlTowerManager : MonoBehaviour {
     {
         if (GameDataManager.instance.generalData.planetsReached > selectedPlanet)
         {
-            PlanetData pd = GameDataManager.instance.planetData[selectedPlanet];
-            float fuelToReach = CalculateFuelConsumption();
+            PlanetData pd = GameDataManager.instance.planetData[selectedPlanet];            
+            int fuelToReach = CalculateFuelConsumption();
+            int fuelSaved = CalculateSavedFuel();
 
             planetMaterial.SetColor(Shader.PropertyToID("_ColorTint"), new Color(1, 1, 1, 1));
             planetMaterial.mainTexture = planetTextures[selectedPlanet];
@@ -104,19 +107,37 @@ public class ControlTowerManager : MonoBehaviour {
                 LocalizationManager.instance.GetLocalizedValue("planet_" + selectedPlanet.ToString() + "_title");
             planetFuel.text = LocalizationManager.instance.GetLocalizedValue("control_tower_fuel_to_reach") + fuelToReach.ToString();
             planetLevels.text = LocalizationManager.instance.GetLocalizedValue("control_tower_levels_to_play") + pd.levelNum.ToString();
+            savedFuel.text = LocalizationManager.instance.GetLocalizedValue("control_tower_fuel_saved");
+            savedFuelNumber.text = selectedPlanet == 0 ? "0" : "-" + fuelSaved.ToString();
 
             if (selectedPlanet + 1 == GameDataManager.instance.generalData.planetsReached)
             {
                 int nextLevel = GameDataManager.instance.planetData[selectedPlanet].levelsFinished + 1;
                 planetCurLevel.text = LocalizationManager.instance.GetLocalizedValue("control_tower_next_level") + nextLevel.ToString();
+                LevelData ld = SaveUnit.LoadLevel(nextLevel, "/Levels/Planet_" + (selectedPlanet + 1).ToString() + "/");
+                switch (ld.winCondition)
+                {
+                    case 1:
+                        levelGoal.text = LocalizationManager.instance.GetLocalizedValue("control_tower_goal_reach_score");
+                        break;
+                    case 2:
+                        levelGoal.text = LocalizationManager.instance.GetLocalizedValue("control_tower_goal_clear_board");
+                        break;
+                    default:
+                        break;
+                }
             }
             else
             {
                 planetCurLevel.text = LocalizationManager.instance.GetLocalizedValue("control_tower_endless_level");
+                levelGoal.text = LocalizationManager.instance.GetLocalizedValue("control_tower_goal_endless");
             }
 
             fuelIcon.SetActive(true);
             fuelIcon.GetComponent<RectTransform>().localPosition = new Vector3(planetFuel.preferredWidth * 1.05f, 0f, 0f);
+            fuelSavedIcon.SetActive(true);
+            savedFuelNumber.GetComponent<RectTransform>().localPosition = new Vector3(savedFuel.preferredWidth * 1.05f, 0f, 0f);
+            fuelSavedIcon.GetComponent<RectTransform>().localPosition = new Vector3((savedFuel.preferredWidth + savedFuelNumber.preferredWidth) * 1.05f, 0f, 0f);
             _lock.SetActive(false);
         }
         else
@@ -127,19 +148,28 @@ public class ControlTowerManager : MonoBehaviour {
             planetFuel.text = "";
             planetLevels.text = "";
             planetCurLevel.text = "";
+            levelGoal.text = "";
+            savedFuel.text = "";
+            savedFuelNumber.text = "";
             fuelIcon.SetActive(false);
+            fuelSavedIcon.SetActive(false);
             _lock.SetActive(true);
         }
     }
 
-    public void DEBUGPlanetSave()
-    {
-        GameDataManager.instance.SaveToDataFile("/PlanetData/planet_" + localData.index.ToString() + ".json", localData);
-    }
+    //public void DEBUGPlanetSave()
+    //{
+    //    GameDataManager.instance.SaveToDataFile("/PlanetData/planet_" + localData.index.ToString() + ".json", localData);
+    //}
 
     private int CalculateFuelConsumption()
     {
         return (int)(GameDataManager.instance.planetData[selectedPlanet].fuelToReach * (1f - GameDataManager.instance.GetEngineBonus()));
+    }
+
+    private int CalculateSavedFuel()
+    {
+        return (int)(GameDataManager.instance.planetData[selectedPlanet].fuelToReach * GameDataManager.instance.GetEngineBonus()) + 1;
     }
 
 }

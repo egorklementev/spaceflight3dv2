@@ -33,6 +33,7 @@ public class GraphicsUnit : MonoBehaviour {
     public TextMeshProUGUI initialMessage;
     public GameObject comboMessage;
     public GameObject popUpPrefab;
+    public Material regularTextMaterial;
     [Space(10)]
 
     [Header("Anchors")]
@@ -124,6 +125,10 @@ public class GraphicsUnit : MonoBehaviour {
     private void Update()
     {
         timeText.text = ParamUnit.GetParsedTime((int) lu.timeLeft);
+        if (pu.timeAvailable >= lu.timeLeft)
+        {
+            timeText.fontMaterial = regularTextMaterial;
+        }
         movesText.text = lu.movesLeft.ToString();
         scoreText.text = LocalizationManager.instance.GetLocalizedValue("game_score") + lu.score.ToString() + "/" + pu.scoreToWin.ToString();
     }

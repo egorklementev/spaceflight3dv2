@@ -160,10 +160,12 @@ public class HangarManager : MonoBehaviour {
                     rd.engineLevel++;
                     mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_engine_upgraded_successfully"), MessageText.ScreenPosition.TOP);
                     UpdateUpgradeInfo(selectedUpgrade);
+					MusicManager.instance.PlaySound("Cash sound");
                 }
                 else
                 {
                     mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_not_enough_metal"), MessageText.ScreenPosition.TOP);
+					MusicManager.instance.PlaySound("Click sound");
                 }
                 break;
             case 2: // Sheathing
@@ -173,10 +175,12 @@ public class HangarManager : MonoBehaviour {
                     rd.sheathingLevel++;
                     mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_sheathing_upgraded_successfully"), MessageText.ScreenPosition.TOP);
                     UpdateUpgradeInfo(selectedUpgrade);
+					MusicManager.instance.PlaySound("Cash sound");
                 }
                 else
                 {
                     mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_not_enough_metal"), MessageText.ScreenPosition.TOP);
+					MusicManager.instance.PlaySound("Click sound");
                 }
                 break;
             case 3: // Frame
@@ -186,10 +190,12 @@ public class HangarManager : MonoBehaviour {
                     rd.frameLevel++;
                     mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_frame_upgraded_successfully"), MessageText.ScreenPosition.TOP);
                     UpdateUpgradeInfo(selectedUpgrade);
+					MusicManager.instance.PlaySound("Cash sound");
                 }
                 else
                 {
                     mt.DisplayMessage(LocalizationManager.instance.GetLocalizedValue("hangar_not_enough_metal"), MessageText.ScreenPosition.TOP);
+					MusicManager.instance.PlaySound("Click sound");
                 }
                 break;
         }

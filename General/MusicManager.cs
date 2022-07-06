@@ -28,7 +28,9 @@ public class MusicManager : MonoBehaviour {
             {
                 if (!obj.GetComponent<AudioSource>().isPlaying)
                 {
-                    obj.GetComponent<AudioSource>().Play();               
+					AudioSource asrc = obj.GetComponent<AudioSource>();
+					asrc.volume = GameDataManager.instance.generalData.musicVolume;
+					asrc.Play();
                 }
             }
             else
@@ -56,9 +58,22 @@ public class MusicManager : MonoBehaviour {
         {
             if (obj.name.Equals(soundName))
             {
-                obj.GetComponent<AudioSource>().Play();
+				AudioSource asrc = obj.GetComponent<AudioSource>();
+				asrc.volume = GameDataManager.instance.generalData.soundVolume;
+				asrc.Play();
                 break;
             }            
         }
     }
+
+	public void UpdateVolume(float volume)
+	{
+        foreach (GameObject obj in audioSources)
+        {
+			if (obj.GetComponent<AudioSource>().isPlaying)
+			{	
+				obj.GetComponent<AudioSource>().volume = volume;
+			}
+        }
+	}
 }
